@@ -252,12 +252,16 @@ class MainWindow(QMainWindow):
     def __on_local_node_address_line_edit_text_changed(
             self
     ) -> None:
-        old_local_node_address_raw = (
-            self.__local_node_address_raw
+        local_node_address_line_edit = (
+            self.__local_node_address_line_edit
         )
 
         new_local_node_address_raw = (
-            self.__local_node_address_line_edit.text().strip()
+            local_node_address_line_edit.text().strip()
+        )
+
+        old_local_node_address_raw = (
+            self.__local_node_address_raw
         )
 
         if (
@@ -309,15 +313,34 @@ class MainWindow(QMainWindow):
             new_local_node_address
         )
 
+        if new_local_node_address is not None:
+            local_node_address_line_edit.setStyleSheet(
+                'QLineEdit {'
+                ' background: rgba(0, 255, 0, 0.25);'
+                ' selection-background-color: rgba(0, 255, 0, 0.5);'
+                ' }'
+            )
+        else:
+            local_node_address_line_edit.setStyleSheet(
+                'QLineEdit {'
+                ' background: rgba(255, 0, 0, 0.25);'
+                ' selection-background-color: rgba(255, 0, 0, 0.5);'
+                ' }'
+            )
+
     def __on_local_node_address_port_line_edit_text_changed(
             self
     ) -> None:
-        old_local_node_address_port_raw = (
-            self.__local_node_address_port_raw
+        local_node_address_port_line_edit = (
+            self.__local_node_address_port_line_edit
         )
 
         new_local_node_address_port_raw = (
-            self.__local_node_address_port_line_edit.text().strip()
+            local_node_address_port_line_edit.text().strip()
+        )
+
+        old_local_node_address_port_raw = (
+            self.__local_node_address_port_raw
         )
 
         if (
@@ -371,6 +394,21 @@ class MainWindow(QMainWindow):
         self.__local_node_address_port = (
             new_local_node_address_port
         )
+
+        if new_local_node_address_port is not None:
+            local_node_address_port_line_edit.setStyleSheet(
+                'QLineEdit {'
+                ' background: rgba(0, 255, 0, 0.25);'
+                ' selection-background-color: rgba(0, 255, 0, 0.5);'
+                ' }'
+            )
+        else:
+            local_node_address_port_line_edit.setStyleSheet(
+                'QLineEdit {'
+                ' background: rgba(255, 0, 0, 0.25);'
+                ' selection-background-color: rgba(255, 0, 0, 0.5);'
+                ' }'
+            )
 
     def __save_config(
             self
