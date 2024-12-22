@@ -48,7 +48,13 @@ class MainWindow(QMainWindow):
         '__local_node_address_port',
         '__local_node_address_port_raw',
         '__local_node_address_port_line_edit',
-        '__local_node_address_raw'
+        '__remote_node_address_raw',
+        '__remote_node_address',
+        '__remote_node_address_line_edit',
+        '__remote_node_address_port',
+        '__remote_node_address_port_raw',
+        '__remote_node_address_port_line_edit',
+        '__remote_node_address_raw'
     )
 
     def __init__(self):
@@ -94,7 +100,7 @@ class MainWindow(QMainWindow):
                 ),
 
                 label_text=(
-                    'IPv4/IPv6 Адрес собственного узла'
+                    'IPv4/IPv6-адрес собственного узла'
                 )
             )
         )
@@ -157,6 +163,76 @@ class MainWindow(QMainWindow):
             self.__on_local_node_address_port_line_edit_text_changed
         )
 
+        remote_node_address_label = (
+            QtUtils.create_label(
+                alignment=(
+                    Qt.AlignmentFlag.AlignLeft
+                ),
+
+                label_text=(
+                    'I2P-адрес удалённого узла'
+                )
+            )
+        )
+
+        remote_node_address_line_edit = (
+            QLineEdit()
+        )
+
+        remote_node_address_raw: (
+            typing.Optional[
+                str
+            ]
+        ) = (
+            config_raw_data.get(
+                'remote_node_address_raw'
+            )
+        )
+
+        if remote_node_address_raw:
+            remote_node_address_line_edit.setText(
+                remote_node_address_raw
+            )
+
+        remote_node_address_line_edit.textChanged.connect(  # noqa
+            self.__on_remote_node_address_line_edit_text_changed
+        )
+
+        remote_node_address_port_label = (
+            QtUtils.create_label(
+                alignment=(
+                    Qt.AlignmentFlag.AlignLeft
+                ),
+
+                label_text=(
+                    'Порт удалённого узла'
+                )
+            )
+        )
+
+        remote_node_address_port_line_edit = (
+            QLineEdit()
+        )
+
+        remote_node_address_port_raw: (
+            typing.Optional[
+                str
+            ]
+        ) = (
+            config_raw_data.get(
+                'remote_node_address_port_raw'
+            )
+        )
+
+        if remote_node_address_port_raw:
+            remote_node_address_port_line_edit.setText(
+                remote_node_address_port_raw
+            )
+
+        remote_node_address_port_line_edit.textChanged.connect(  # noqa
+            self.__on_remote_node_address_port_line_edit_text_changed
+        )
+
         functionality_layout.addWidget(
             local_node_address_label,
             0, 0, 1, 1
@@ -175,6 +251,26 @@ class MainWindow(QMainWindow):
         functionality_layout.addWidget(
             local_node_address_port_line_edit,
             1, 1, 1, 1
+        )
+
+        functionality_layout.addWidget(
+            remote_node_address_label,
+            2, 0, 1, 1
+        )
+
+        functionality_layout.addWidget(
+            remote_node_address_port_label,
+            2, 1, 1, 1
+        )
+
+        functionality_layout.addWidget(
+            remote_node_address_line_edit,
+            3, 0, 1, 1
+        )
+
+        functionality_layout.addWidget(
+            remote_node_address_port_line_edit,
+            3, 1, 1, 1
         )
 
         window_layout.addLayout(
@@ -404,6 +500,167 @@ class MainWindow(QMainWindow):
             )
         else:
             local_node_address_port_line_edit.setStyleSheet(
+                'QLineEdit {'
+                ' background: rgba(255, 0, 0, 0.25);'
+                ' selection-background-color: rgba(255, 0, 0, 0.5);'
+                ' }'
+            )
+
+    def __on_remote_node_address_line_edit_text_changed(
+            self
+    ) -> None:
+        remote_node_address_line_edit = (
+            self.__remote_node_address_line_edit
+        )
+
+        new_remote_node_address_raw = (
+            remote_node_address_line_edit.text().strip()
+        )
+
+        old_remote_node_address_raw = (
+            self.__remote_node_address_raw
+        )
+
+        if (
+                old_remote_node_address_raw is not None and
+                (
+                    new_remote_node_address_raw ==
+                    old_remote_node_address_raw
+                )
+        ):
+            return
+
+        self.__remote_node_address_raw = (
+            new_remote_node_address_raw
+        )
+
+        (
+            self.__config_raw_data[
+                'remote_node_address_raw'
+            ]
+        ) = new_remote_node_address_raw
+
+        self.__save_config()
+
+        new_remote_node_address: (
+            typing.Optional[
+                typing.Union[
+                    IPv4Address,
+                    IPv6Address
+                ]
+            ]
+        )
+
+        try:
+            new_remote_node_address = (
+                ip_address(
+                    new_remote_node_address_raw
+                )
+            )
+        except ValueError:
+            print(
+                f'Could not parse IP address {new_remote_node_address_raw!r}'
+            )
+
+            new_remote_node_address = (
+                None
+            )
+
+        self.__remote_node_address = (
+            new_remote_node_address
+        )
+
+        if new_remote_node_address is not None:
+            remote_node_address_line_edit.setStyleSheet(
+                'QLineEdit {'
+                ' background: rgba(0, 255, 0, 0.25);'
+                ' selection-background-color: rgba(0, 255, 0, 0.5);'
+                ' }'
+            )
+        else:
+            remote_node_address_line_edit.setStyleSheet(
+                'QLineEdit {'
+                ' background: rgba(255, 0, 0, 0.25);'
+                ' selection-background-color: rgba(255, 0, 0, 0.5);'
+                ' }'
+            )
+
+    def __on_remote_node_address_port_line_edit_text_changed(
+            self
+    ) -> None:
+        remote_node_address_port_line_edit = (
+            self.__remote_node_address_port_line_edit
+        )
+
+        new_remote_node_address_port_raw = (
+            remote_node_address_port_line_edit.text().strip()
+        )
+
+        old_remote_node_address_port_raw = (
+            self.__remote_node_address_port_raw
+        )
+
+        if (
+                old_remote_node_address_port_raw is not None and
+
+                (
+                    new_remote_node_address_port_raw ==
+                    old_remote_node_address_port_raw
+                )
+        ):
+            return
+
+        self.__remote_node_address_port_raw = (
+            new_remote_node_address_port_raw
+        )
+
+        (
+            self.__config_raw_data[
+                'remote_node_address_port_raw'
+            ]
+        ) = new_remote_node_address_port_raw
+
+        self.__save_config()
+
+        new_remote_node_address_port: (
+            typing.Optional[
+                int
+            ]
+        )
+
+        if new_remote_node_address_port_raw.isdigit():
+            try:
+                new_remote_node_address_port = (
+                    int(
+                        new_remote_node_address_port_raw
+                    )
+                )
+            except ValueError:
+                print(
+                    f'Could not parse port {new_remote_node_address_port_raw!r}'
+                )
+
+                new_remote_node_address_port = (
+                    None
+                )
+        else:
+            new_remote_node_address_port = (
+                None
+            )
+
+        self.__remote_node_address_port = (
+            new_remote_node_address_port
+        )
+
+        if new_remote_node_address_port is not None:
+            remote_node_address_port_line_edit.setStyleSheet(
+                'QLineEdit {'
+                ' background: rgba(0, 255, 0, 0.25);'
+                ' selection-background-color: rgba(0, 255, 0, 0.5);'
+                ' }'
+            )
+        else:
+            remote_node_address_port_line_edit.setStyleSheet(
                 'QLineEdit {'
                 ' background: rgba(255, 0, 0, 0.25);'
                 ' selection-background-color: rgba(255, 0, 0, 0.5);'
