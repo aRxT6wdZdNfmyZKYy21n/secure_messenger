@@ -48,8 +48,7 @@ class MainWindow(QMainWindow):
         '__local_node_address_port',
         '__local_node_address_port_raw',
         '__local_node_address_port_line_edit',
-        '__remote_node_address_raw',
-        '__remote_node_address',
+        '__local_node_address_raw',
         '__remote_node_address_line_edit',
         '__remote_node_address_port',
         '__remote_node_address_port_raw',
@@ -342,8 +341,37 @@ class MainWindow(QMainWindow):
             ]
         ) = None
 
+        self.__remote_node_address_line_edit = (
+            remote_node_address_line_edit
+        )
+
+        self.__remote_node_address_port: (
+            typing.Optional[
+                int
+            ]
+        ) = None
+
+        self.__remote_node_address_port_line_edit = (
+            remote_node_address_port_line_edit
+        )
+
+        self.__remote_node_address_port_raw: (
+            typing.Optional[
+                str
+            ]
+        ) = None
+
+        self.__remote_node_address_raw: (
+            typing.Optional[
+                str
+            ]
+        ) = None
+
         self.__on_local_node_address_line_edit_text_changed()
         self.__on_local_node_address_port_line_edit_text_changed()
+
+        self.__on_remote_node_address_line_edit_text_changed()
+        self.__on_remote_node_address_port_line_edit_text_changed()
 
     def __on_local_node_address_line_edit_text_changed(
             self
@@ -474,6 +502,19 @@ class MainWindow(QMainWindow):
                         new_local_node_address_port_raw
                     )
                 )
+
+                if not (
+                        0 <
+                        new_local_node_address_port <
+
+                        (
+                            1 <<
+                            16
+                        )
+                ):
+                    new_local_node_address_port = (
+                        None
+                    )
             except ValueError:
                 print(
                     f'Could not parse port {new_local_node_address_port_raw!r}'
@@ -542,35 +583,7 @@ class MainWindow(QMainWindow):
 
         self.__save_config()
 
-        new_remote_node_address: (
-            typing.Optional[
-                typing.Union[
-                    IPv4Address,
-                    IPv6Address
-                ]
-            ]
-        )
-
-        try:
-            new_remote_node_address = (
-                ip_address(
-                    new_remote_node_address_raw
-                )
-            )
-        except ValueError:
-            print(
-                f'Could not parse IP address {new_remote_node_address_raw!r}'
-            )
-
-            new_remote_node_address = (
-                None
-            )
-
-        self.__remote_node_address = (
-            new_remote_node_address
-        )
-
-        if new_remote_node_address is not None:
+        if 1:  # TODO: check by regexp match
             remote_node_address_line_edit.setStyleSheet(
                 'QLineEdit {'
                 ' background: rgba(0, 255, 0, 0.25);'
@@ -635,6 +648,19 @@ class MainWindow(QMainWindow):
                         new_remote_node_address_port_raw
                     )
                 )
+
+                if not (
+                        0 <
+                        new_remote_node_address_port <
+
+                        (
+                            1 <<
+                            16
+                        )
+                ):
+                    new_remote_node_address_port = (
+                        None
+                    )
             except ValueError:
                 print(
                     f'Could not parse port {new_remote_node_address_port_raw!r}'
