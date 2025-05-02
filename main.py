@@ -1,5 +1,6 @@
 import asyncio
 import codecs
+import logging
 
 import sys
 import typing
@@ -10,7 +11,9 @@ from ipaddress import (
     IPv6Address
 )
 
+import i2plib
 import orjson
+
 from PyQt6.QtCore import (
     Qt
 )
@@ -22,6 +25,11 @@ from PyQt6.QtWidgets import (
     QMainWindow,
     QVBoxLayout,
     QWidget
+)
+
+from qasync import (
+    QEventLoop,
+    asyncSlot
 )
 
 from utils.json import (
@@ -43,6 +51,10 @@ _CONFIG_FILE_PATH = (
 class MainWindow(QMainWindow):
     __slots__ = (
         '__config_raw_data',
+        '__local_i2p_node_address',
+        '__local_i2p_node_address_key_label',
+        '__local_i2p_node_address_value_label',
+        '__local_i2p_node_destination',
         '__local_i2p_node_sam_ip_address',
         '__local_i2p_node_sam_ip_address_line_edit',
         '__local_i2p_node_sam_port',
@@ -79,9 +91,30 @@ class MainWindow(QMainWindow):
             )
         )
 
-        functionality_layout = (
-            QGridLayout()
+        local_i2p_node_destination_raw = (
+            config_raw_data.get(
+                'local_i2p_node_destination_raw'
+            )
         )
+
+        local_i2p_node_destination: (
+            typing.Optional[
+                i2plib.Destination
+            ]
+        )
+
+        if local_i2p_node_destination_raw is not None:
+            local_i2p_node_destination = (
+                i2plib.Destination(
+                    data=(
+                        local_i2p_node_destination_raw
+                    )
+                )
+            )
+        else:
+            local_i2p_node_destination = (
+                None
+            )
 
         window_layout_widget = (
             QWidget()
@@ -91,6 +124,12 @@ class MainWindow(QMainWindow):
             QVBoxLayout(
                 window_layout_widget
             )
+        )
+
+        # Filling functionality layout
+
+        functionality_layout = (
+            QGridLayout()
         )
 
         local_i2p_node_sam_ip_address_label = (
@@ -135,7 +174,7 @@ class MainWindow(QMainWindow):
                 ),
 
                 label_text=(
-                    'Порт собственного узла'
+                    'Порт I2P SAM'
                 )
             )
         )
@@ -277,8 +316,58 @@ class MainWindow(QMainWindow):
             functionality_layout
         )
 
-        window_layout.addWidget(
-            QWidget()
+        # Filling info layout
+
+        info_layout = (
+            QGridLayout()
+        )
+
+        local_i2p_node_address = (
+            self.__get_local_i2p_node_address(
+                local_i2p_node_destination
+            )
+        )
+
+        local_i2p_node_address_key_label = (
+            QtUtils.create_label(
+                alignment=(
+                    Qt.AlignmentFlag.AlignLeft
+                ),
+
+                label_text=(
+                    'Адрес собственного узла'
+                )
+            )
+        )
+
+        local_i2p_node_address_value_label = (
+            QtUtils.create_label(
+                alignment=(
+                    Qt.AlignmentFlag.AlignLeft
+                ),
+
+                label_text=(
+                    local_i2p_node_address
+                )
+            )
+        )
+
+        local_i2p_node_address_value_label.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse
+        )
+
+        info_layout.addWidget(
+            local_i2p_node_address_key_label,
+            0, 0, 1, 1
+        )
+
+        info_layout.addWidget(
+            local_i2p_node_address_value_label,
+            0, 1, 1, 1
+        )
+
+        window_layout.addLayout(
+            info_layout
         )
 
         # Set the central widget of the Window.
@@ -309,6 +398,22 @@ class MainWindow(QMainWindow):
 
         self.__config_raw_data = (
             config_raw_data
+        )
+
+        self.__local_i2p_node_address = (
+            local_i2p_node_address
+        )
+
+        self.__local_i2p_node_address_key_label = (
+            local_i2p_node_address_key_label
+        )
+
+        self.__local_i2p_node_address_value_label = (
+            local_i2p_node_address_value_label
+        )
+
+        self.__local_i2p_node_destination = (
+            local_i2p_node_destination
         )
 
         self.__local_i2p_node_sam_ip_address: (
@@ -377,6 +482,93 @@ class MainWindow(QMainWindow):
 
         self.__on_remote_i2p_node_address_line_edit_text_changed()
         self.__on_remote_i2p_node_port_line_edit_text_changed()
+
+        self.__update_local_i2p_node_address()
+
+    async def update_local_i2p_node_destination(
+            self
+    ) -> None:
+        if self.__local_i2p_node_destination is not None:
+            return
+
+        local_i2p_node_sam_ip_address = (
+            self.__local_i2p_node_sam_ip_address
+        )
+
+        if local_i2p_node_sam_ip_address is None:
+            self.__config_raw_data.pop(
+                'local_i2p_node_destination_raw',
+                None
+            )
+
+            self.__update_local_i2p_node_address()
+
+            return
+
+        local_i2p_node_sam_port = (
+            self.__local_i2p_node_sam_port
+        )
+
+        if local_i2p_node_sam_port is None:
+            self.__config_raw_data.pop(
+                'local_i2p_node_destination_raw',
+                None
+            )
+
+            self.__update_local_i2p_node_address()
+
+            return
+
+        local_i2p_node_sam_ip_address_and_port_pair = (
+            str(
+                local_i2p_node_sam_ip_address
+            ),
+
+            local_i2p_node_sam_port
+        )
+
+        local_i2p_node_destination = (
+            self.__local_i2p_node_destination
+        ) = (
+            await (
+                i2plib.new_destination(
+                    sam_address=(
+                        local_i2p_node_sam_ip_address_and_port_pair
+                    ),
+                )
+            )
+        )
+
+        local_i2p_node_destination_raw = (
+            local_i2p_node_destination.base64
+        )
+
+        (
+            self.__config_raw_data[
+                'local_i2p_node_destination_raw'
+            ]
+        ) = local_i2p_node_destination_raw
+
+        self.__save_config()
+
+        self.__update_local_i2p_node_address()
+
+    @staticmethod
+    def __get_local_i2p_node_address(
+            local_i2p_node_destination: (
+                typing.Optional[
+                    i2plib.Destination
+                ]
+            )
+    ) -> str:
+        if local_i2p_node_destination is not None:
+            return (
+                f'{local_i2p_node_destination.base32}.b32.i2p'
+            )
+
+        return (
+            'N/A'
+        )
 
     def __on_local_i2p_node_sam_ip_address_line_edit_text_changed(
             self
@@ -716,12 +908,49 @@ class MainWindow(QMainWindow):
                 ).decode()
             )
 
-
-async def main() -> None:
-    app = (
-        QApplication(
-            sys.argv
+    def __update_local_i2p_node_address(
+            self
+    ) -> None:
+        new_local_i2p_node_address = (
+            self.__get_local_i2p_node_address(
+                self.__local_i2p_node_destination
+            )
         )
+
+        old_local_i2p_node_address = (
+            self.__local_i2p_node_address
+        )
+
+        if (
+                old_local_i2p_node_address is not None and
+
+                (
+                    new_local_i2p_node_address ==
+                    old_local_i2p_node_address
+                )
+        ):
+            return
+
+        self.__local_i2p_node_address = (
+            new_local_i2p_node_address
+        )
+
+        self.__local_i2p_node_address_value_label.setText(
+            new_local_i2p_node_address
+        )
+
+
+async def run_application(
+        application: (
+            QApplication
+        )
+) -> None:
+    application_close_event = (
+        asyncio.Event()
+    )
+
+    application.aboutToQuit.connect(  # noqa
+        application_close_event.set
     )
 
     window = (
@@ -730,13 +959,65 @@ async def main() -> None:
 
     window.show()
 
-    app.exec()
+    # Step 1: create destination if needed
+
+    asyncio.create_task(
+        window.update_local_i2p_node_destination()
+    )
+
+    # application.exec()
+
+    # with py_qt_event_loop:
+    #     py_qt_event_loop.run_forever()
+
+    await (
+        application_close_event.wait()
+    )
+
+
+def main() -> None:
+    logging.basicConfig(
+        level=(
+            logging.DEBUG
+        )
+    )
+
+    # create PyQt6 application
+
+    application = (
+        QApplication(
+            sys.argv
+        )
+    )
+
+    py_qt_event_loop = (
+        QEventLoop(
+            application
+        )
+    )
+
+    # py_qt_event_loop.set_debug(
+    #     True
+    # )
+
+    asyncio.set_event_loop(
+        py_qt_event_loop
+    )
+
+    py_qt_event_loop.run_until_complete(
+        run_application(
+            application
+        )
+    )
+    # asyncio.run(
+    #     run_application(
+    #         application
+    #     )
+    # )
 
 
 if (
         __name__ ==
         '__main__'
 ):
-    asyncio.run(
-        main()
-    )
+    main()
