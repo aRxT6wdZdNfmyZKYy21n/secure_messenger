@@ -43,17 +43,18 @@ _CONFIG_FILE_PATH = (
 class MainWindow(QMainWindow):
     __slots__ = (
         '__config_raw_data',
-        '__local_node_address',
-        '__local_node_address_line_edit',
-        '__local_node_address_port',
-        '__local_node_address_port_raw',
-        '__local_node_address_port_line_edit',
-        '__local_node_address_raw',
-        '__remote_node_address_line_edit',
-        '__remote_node_address_port',
-        '__remote_node_address_port_raw',
-        '__remote_node_address_port_line_edit',
-        '__remote_node_address_raw'
+        '__local_i2p_node_sam_ip_address',
+        '__local_i2p_node_sam_ip_address_line_edit',
+        '__local_i2p_node_sam_port',
+        '__local_i2p_node_sam_ip_address_raw',
+        '__local_i2p_node_sam_port',
+        '__local_i2p_node_sam_port_raw',
+        '__local_i2p_node_sam_port_line_edit',
+        '__remote_i2p_node_address_line_edit',
+        '__remote_i2p_node_address_raw',
+        '__remote_i2p_node_port',
+        '__remote_i2p_node_port_raw',
+        '__remote_i2p_node_port_line_edit'
     )
 
     def __init__(self):
@@ -92,42 +93,42 @@ class MainWindow(QMainWindow):
             )
         )
 
-        local_node_address_label = (
+        local_i2p_node_sam_ip_address_label = (
             QtUtils.create_label(
                 alignment=(
                     Qt.AlignmentFlag.AlignLeft
                 ),
 
                 label_text=(
-                    'IPv4/IPv6-адрес собственного узла'
+                    'IPv4/IPv6-адрес I2P SAM'
                 )
             )
         )
 
-        local_node_address_line_edit = (
+        local_i2p_node_sam_ip_address_line_edit = (
             QLineEdit()
         )
 
-        local_node_address_raw: (
+        local_i2p_node_sam_ip_address_raw: (
             typing.Optional[
                 str
             ]
         ) = (
             config_raw_data.get(
-                'local_node_address_raw'
+                'local_i2p_node_sam_ip_address_raw'
             )
         )
 
-        if local_node_address_raw:
-            local_node_address_line_edit.setText(
-                local_node_address_raw
+        if local_i2p_node_sam_ip_address_raw:
+            local_i2p_node_sam_ip_address_line_edit.setText(
+                local_i2p_node_sam_ip_address_raw
             )
 
-        local_node_address_line_edit.textChanged.connect(  # noqa
-            self.__on_local_node_address_line_edit_text_changed
+        local_i2p_node_sam_ip_address_line_edit.textChanged.connect(  # noqa
+            self.__on_local_i2p_node_sam_ip_address_line_edit_text_changed
         )
 
-        local_node_address_port_label = (
+        local_i2p_node_sam_port_label = (
             QtUtils.create_label(
                 alignment=(
                     Qt.AlignmentFlag.AlignLeft
@@ -139,30 +140,30 @@ class MainWindow(QMainWindow):
             )
         )
 
-        local_node_address_port_line_edit = (
+        local_i2p_node_sam_port_line_edit = (
             QLineEdit()
         )
 
-        local_node_address_port_raw: (
+        local_i2p_node_sam_port_raw: (
             typing.Optional[
                 str
             ]
         ) = (
             config_raw_data.get(
-                'local_node_address_port_raw'
+                'local_i2p_node_sam_port_raw'
             )
         )
 
-        if local_node_address_port_raw:
-            local_node_address_port_line_edit.setText(
-                local_node_address_port_raw
+        if local_i2p_node_sam_port_raw:
+            local_i2p_node_sam_port_line_edit.setText(
+                local_i2p_node_sam_port_raw
             )
 
-        local_node_address_port_line_edit.textChanged.connect(  # noqa
-            self.__on_local_node_address_port_line_edit_text_changed
+        local_i2p_node_sam_port_line_edit.textChanged.connect(  # noqa
+            self.__on_local_i2p_node_sam_port_line_edit_text_changed
         )
 
-        remote_node_address_label = (
+        remote_i2p_node_address_label = (
             QtUtils.create_label(
                 alignment=(
                     Qt.AlignmentFlag.AlignLeft
@@ -174,30 +175,30 @@ class MainWindow(QMainWindow):
             )
         )
 
-        remote_node_address_line_edit = (
+        remote_i2p_node_address_line_edit = (
             QLineEdit()
         )
 
-        remote_node_address_raw: (
+        remote_i2p_node_address_raw: (
             typing.Optional[
                 str
             ]
         ) = (
             config_raw_data.get(
-                'remote_node_address_raw'
+                'remote_i2p_node_address_raw'
             )
         )
 
-        if remote_node_address_raw:
-            remote_node_address_line_edit.setText(
-                remote_node_address_raw
+        if remote_i2p_node_address_raw:
+            remote_i2p_node_address_line_edit.setText(
+                remote_i2p_node_address_raw
             )
 
-        remote_node_address_line_edit.textChanged.connect(  # noqa
-            self.__on_remote_node_address_line_edit_text_changed
+        remote_i2p_node_address_line_edit.textChanged.connect(  # noqa
+            self.__on_remote_i2p_node_address_line_edit_text_changed
         )
 
-        remote_node_address_port_label = (
+        remote_i2p_node_port_label = (
             QtUtils.create_label(
                 alignment=(
                     Qt.AlignmentFlag.AlignLeft
@@ -209,66 +210,66 @@ class MainWindow(QMainWindow):
             )
         )
 
-        remote_node_address_port_line_edit = (
+        remote_i2p_node_port_line_edit = (
             QLineEdit()
         )
 
-        remote_node_address_port_raw: (
+        remote_i2p_node_port_raw: (
             typing.Optional[
                 str
             ]
         ) = (
             config_raw_data.get(
-                'remote_node_address_port_raw'
+                'remote_i2p_node_port_raw'
             )
         )
 
-        if remote_node_address_port_raw:
-            remote_node_address_port_line_edit.setText(
-                remote_node_address_port_raw
+        if remote_i2p_node_port_raw:
+            remote_i2p_node_port_line_edit.setText(
+                remote_i2p_node_port_raw
             )
 
-        remote_node_address_port_line_edit.textChanged.connect(  # noqa
-            self.__on_remote_node_address_port_line_edit_text_changed
+        remote_i2p_node_port_line_edit.textChanged.connect(  # noqa
+            self.__on_remote_i2p_node_port_line_edit_text_changed
         )
 
         functionality_layout.addWidget(
-            local_node_address_label,
+            local_i2p_node_sam_ip_address_label,
             0, 0, 1, 1
         )
 
         functionality_layout.addWidget(
-            local_node_address_port_label,
+            local_i2p_node_sam_port_label,
             0, 1, 1, 1
         )
 
         functionality_layout.addWidget(
-            local_node_address_line_edit,
+            local_i2p_node_sam_ip_address_line_edit,
             1, 0, 1, 1
         )
 
         functionality_layout.addWidget(
-            local_node_address_port_line_edit,
+            local_i2p_node_sam_port_line_edit,
             1, 1, 1, 1
         )
 
         functionality_layout.addWidget(
-            remote_node_address_label,
+            remote_i2p_node_address_label,
             2, 0, 1, 1
         )
 
         functionality_layout.addWidget(
-            remote_node_address_port_label,
+            remote_i2p_node_port_label,
             2, 1, 1, 1
         )
 
         functionality_layout.addWidget(
-            remote_node_address_line_edit,
+            remote_i2p_node_address_line_edit,
             3, 0, 1, 1
         )
 
         functionality_layout.addWidget(
-            remote_node_address_port_line_edit,
+            remote_i2p_node_port_line_edit,
             3, 1, 1, 1
         )
 
@@ -306,7 +307,7 @@ class MainWindow(QMainWindow):
             config_raw_data
         )
 
-        self.__local_node_address: (
+        self.__local_i2p_node_sam_ip_address: (
             typing.Optional[
                 typing.Union[
                     IPv4Address,
@@ -315,101 +316,102 @@ class MainWindow(QMainWindow):
             ]
         ) = None
 
-        self.__local_node_address_line_edit = (
-            local_node_address_line_edit
+        self.__local_i2p_node_sam_ip_address_line_edit = (
+            local_i2p_node_sam_ip_address_line_edit
         )
 
-        self.__local_node_address_port: (
+        self.__local_i2p_node_sam_ip_address_raw: (
+            typing.Optional[
+                str
+            ]
+        ) = None
+
+        self.__local_i2p_node_sam_port: (
             typing.Optional[
                 int
             ]
         ) = None
 
-        self.__local_node_address_port_line_edit = (
-            local_node_address_port_line_edit
+        self.__local_i2p_node_sam_port_line_edit = (
+            local_i2p_node_sam_port_line_edit
         )
 
-        self.__local_node_address_port_raw: (
+        self.__local_i2p_node_sam_port_raw: (
             typing.Optional[
                 str
             ]
         ) = None
 
-        self.__local_node_address_raw: (
+        self.__remote_i2p_node_address_line_edit = (
+            remote_i2p_node_address_line_edit
+        )
+
+        self.__remote_i2p_node_address_raw: (
             typing.Optional[
                 str
             ]
         ) = None
 
-        self.__remote_node_address_line_edit = (
-            remote_node_address_line_edit
-        )
-
-        self.__remote_node_address_port: (
+        self.__remote_i2p_node_port: (
             typing.Optional[
                 int
             ]
         ) = None
 
-        self.__remote_node_address_port_line_edit = (
-            remote_node_address_port_line_edit
+        self.__remote_i2p_node_port_line_edit = (
+            remote_i2p_node_port_line_edit
         )
 
-        self.__remote_node_address_port_raw: (
+        self.__remote_i2p_node_port_raw: (
             typing.Optional[
                 str
             ]
         ) = None
 
-        self.__remote_node_address_raw: (
-            typing.Optional[
-                str
-            ]
-        ) = None
+        self.__on_local_i2p_node_sam_ip_address_line_edit_text_changed()
+        self.__on_local_i2p_node_sam_port_line_edit_text_changed()
 
-        self.__on_local_node_address_line_edit_text_changed()
-        self.__on_local_node_address_port_line_edit_text_changed()
+        self.__on_remote_i2p_node_address_line_edit_text_changed()
+        self.__on_remote_i2p_node_port_line_edit_text_changed()
 
-        self.__on_remote_node_address_line_edit_text_changed()
-        self.__on_remote_node_address_port_line_edit_text_changed()
-
-    def __on_local_node_address_line_edit_text_changed(
+    def __on_local_i2p_node_sam_ip_address_line_edit_text_changed(
             self
     ) -> None:
-        local_node_address_line_edit = (
-            self.__local_node_address_line_edit
+        local_i2p_node_sam_ip_address_line_edit = (
+            self.__local_i2p_node_sam_ip_address_line_edit
         )
 
-        new_local_node_address_raw = (
-            local_node_address_line_edit.text().strip()
+        new_local_i2p_node_sam_ip_address_raw = (
+            local_i2p_node_sam_ip_address_line_edit.text().strip()
         )
 
-        old_local_node_address_raw = (
-            self.__local_node_address_raw
+        old_local_i2p_node_sam_ip_address_raw = (
+            self.__local_i2p_node_sam_ip_address_raw
         )
 
         if (
-                old_local_node_address_raw is not None and
+                old_local_i2p_node_sam_ip_address_raw is not None and
+
                 (
-                    new_local_node_address_raw ==
-                    old_local_node_address_raw
+                    new_local_i2p_node_sam_ip_address_raw ==
+                    old_local_i2p_node_sam_ip_address_raw
                 )
         ):
             return
 
-        self.__local_node_address_raw = (
-            new_local_node_address_raw
+        self.__local_i2p_node_sam_ip_address_raw = (
+            new_local_i2p_node_sam_ip_address_raw
         )
 
         (
             self.__config_raw_data[
-                'local_node_address_raw'
+                'local_i2p_node_sam_ip_address_raw'
             ]
-        ) = new_local_node_address_raw
+        ) = new_local_i2p_node_sam_ip_address_raw
 
         self.__save_config()
 
-        new_local_node_address: (
+        new_local_i2p_node_sam_ip_address: (
             typing.Optional[
                 typing.Union[
                     IPv4Address,
@@ -419,274 +421,275 @@ class MainWindow(QMainWindow):
         )
 
         try:
-            new_local_node_address = (
+            new_local_i2p_node_sam_ip_address = (
                 ip_address(
-                    new_local_node_address_raw
+                    new_local_i2p_node_sam_ip_address_raw
                 )
             )
         except ValueError:
             print(
-                f'Could not parse IP address {new_local_node_address_raw!r}'
+                f'Could not parse IP address {new_local_i2p_node_sam_ip_address_raw!r}'
             )
 
-            new_local_node_address = (
+            new_local_i2p_node_sam_ip_address = (
                 None
             )
 
-        self.__local_node_address = (
-            new_local_node_address
+        self.__local_i2p_node_sam_ip_address = (
+            new_local_i2p_node_sam_ip_address
         )
 
-        if new_local_node_address is not None:
-            local_node_address_line_edit.setStyleSheet(
+        if new_local_i2p_node_sam_ip_address is not None:
+            local_i2p_node_sam_ip_address_line_edit.setStyleSheet(
                 'QLineEdit {'
                 ' background: rgba(0, 255, 0, 0.25);'
                 ' selection-background-color: rgba(0, 255, 0, 0.5);'
                 ' }'
             )
         else:
-            local_node_address_line_edit.setStyleSheet(
+            local_i2p_node_sam_ip_address_line_edit.setStyleSheet(
                 'QLineEdit {'
                 ' background: rgba(255, 0, 0, 0.25);'
                 ' selection-background-color: rgba(255, 0, 0, 0.5);'
                 ' }'
             )
 
-    def __on_local_node_address_port_line_edit_text_changed(
+    def __on_local_i2p_node_sam_port_line_edit_text_changed(
             self
     ) -> None:
-        local_node_address_port_line_edit = (
-            self.__local_node_address_port_line_edit
+        local_i2p_node_sam_port_line_edit = (
+            self.__local_i2p_node_sam_port_line_edit
         )
 
-        new_local_node_address_port_raw = (
-            local_node_address_port_line_edit.text().strip()
+        new_local_i2p_node_sam_port_raw = (
+            local_i2p_node_sam_port_line_edit.text().strip()
         )
 
-        old_local_node_address_port_raw = (
-            self.__local_node_address_port_raw
+        old_local_i2p_node_sam_port_raw = (
+            self.__local_i2p_node_sam_port_raw
         )
 
         if (
-                old_local_node_address_port_raw is not None and
+                old_local_i2p_node_sam_port_raw is not None and
 
                 (
-                    new_local_node_address_port_raw ==
-                    old_local_node_address_port_raw
+                    new_local_i2p_node_sam_port_raw ==
+                    old_local_i2p_node_sam_port_raw
                 )
         ):
             return
 
-        self.__local_node_address_port_raw = (
-            new_local_node_address_port_raw
+        self.__local_i2p_node_sam_port_raw = (
+            new_local_i2p_node_sam_port_raw
         )
 
         (
             self.__config_raw_data[
-                'local_node_address_port_raw'
+                'local_i2p_node_sam_port_raw'
             ]
-        ) = new_local_node_address_port_raw
+        ) = new_local_i2p_node_sam_port_raw
 
         self.__save_config()
 
-        new_local_node_address_port: (
+        new_local_i2p_node_sam_port: (
             typing.Optional[
                 int
             ]
         )
 
-        if new_local_node_address_port_raw.isdigit():
+        if new_local_i2p_node_sam_port_raw.isdigit():
             try:
-                new_local_node_address_port = (
+                new_local_i2p_node_sam_port = (
                     int(
-                        new_local_node_address_port_raw
+                        new_local_i2p_node_sam_port_raw
                     )
                 )
 
                 if not (
                         0 <
-                        new_local_node_address_port <
+                        new_local_i2p_node_sam_port <
 
                         (
                             1 <<
                             16
                         )
                 ):
-                    new_local_node_address_port = (
+                    new_local_i2p_node_sam_port = (
                         None
                     )
             except ValueError:
                 print(
-                    f'Could not parse port {new_local_node_address_port_raw!r}'
+                    f'Could not parse port {new_local_i2p_node_sam_port_raw!r}'
                 )
 
-                new_local_node_address_port = (
+                new_local_i2p_node_sam_port = (
                     None
                 )
         else:
-            new_local_node_address_port = (
+            new_local_i2p_node_sam_port = (
                 None
             )
 
-        self.__local_node_address_port = (
-            new_local_node_address_port
+        self.__local_i2p_node_sam_port = (
+            new_local_i2p_node_sam_port
         )
 
-        if new_local_node_address_port is not None:
-            local_node_address_port_line_edit.setStyleSheet(
+        if new_local_i2p_node_sam_port is not None:
+            local_i2p_node_sam_port_line_edit.setStyleSheet(
                 'QLineEdit {'
                 ' background: rgba(0, 255, 0, 0.25);'
                 ' selection-background-color: rgba(0, 255, 0, 0.5);'
                 ' }'
             )
         else:
-            local_node_address_port_line_edit.setStyleSheet(
+            local_i2p_node_sam_port_line_edit.setStyleSheet(
                 'QLineEdit {'
                 ' background: rgba(255, 0, 0, 0.25);'
                 ' selection-background-color: rgba(255, 0, 0, 0.5);'
                 ' }'
             )
 
-    def __on_remote_node_address_line_edit_text_changed(
+    def __on_remote_i2p_node_address_line_edit_text_changed(
             self
     ) -> None:
-        remote_node_address_line_edit = (
-            self.__remote_node_address_line_edit
+        remote_i2p_node_address_line_edit = (
+            self.__remote_i2p_node_address_line_edit
         )
 
-        new_remote_node_address_raw = (
-            remote_node_address_line_edit.text().strip()
+        new_remote_i2p_node_address_raw = (
+            remote_i2p_node_address_line_edit.text().strip()
         )
 
-        old_remote_node_address_raw = (
-            self.__remote_node_address_raw
+        old_remote_i2p_node_address_raw = (
+            self.__remote_i2p_node_address_raw
         )
 
         if (
-                old_remote_node_address_raw is not None and
+                old_remote_i2p_node_address_raw is not None and
+
                 (
-                    new_remote_node_address_raw ==
-                    old_remote_node_address_raw
+                    new_remote_i2p_node_address_raw ==
+                    old_remote_i2p_node_address_raw
                 )
         ):
             return
 
-        self.__remote_node_address_raw = (
-            new_remote_node_address_raw
+        self.__remote_i2p_node_address_raw = (
+            new_remote_i2p_node_address_raw
         )
 
         (
             self.__config_raw_data[
-                'remote_node_address_raw'
+                'remote_i2p_node_address_raw'
             ]
-        ) = new_remote_node_address_raw
+        ) = new_remote_i2p_node_address_raw
 
         self.__save_config()
 
         if 1:  # TODO: check by regexp match
-            remote_node_address_line_edit.setStyleSheet(
+            remote_i2p_node_address_line_edit.setStyleSheet(
                 'QLineEdit {'
                 ' background: rgba(0, 255, 0, 0.25);'
                 ' selection-background-color: rgba(0, 255, 0, 0.5);'
                 ' }'
             )
         else:
-            remote_node_address_line_edit.setStyleSheet(
+            remote_i2p_node_address_line_edit.setStyleSheet(  # noqa
                 'QLineEdit {'
                 ' background: rgba(255, 0, 0, 0.25);'
                 ' selection-background-color: rgba(255, 0, 0, 0.5);'
                 ' }'
             )
 
-    def __on_remote_node_address_port_line_edit_text_changed(
+    def __on_remote_i2p_node_port_line_edit_text_changed(
             self
     ) -> None:
-        remote_node_address_port_line_edit = (
-            self.__remote_node_address_port_line_edit
+        remote_i2p_node_port_line_edit = (
+            self.__remote_i2p_node_port_line_edit
         )
 
-        new_remote_node_address_port_raw = (
-            remote_node_address_port_line_edit.text().strip()
+        new_remote_i2p_node_port_raw = (
+            remote_i2p_node_port_line_edit.text().strip()
         )
 
-        old_remote_node_address_port_raw = (
-            self.__remote_node_address_port_raw
+        old_remote_i2p_node_port_raw = (
+            self.__remote_i2p_node_port_raw
         )
 
         if (
-                old_remote_node_address_port_raw is not None and
+                old_remote_i2p_node_port_raw is not None and
 
                 (
-                    new_remote_node_address_port_raw ==
-                    old_remote_node_address_port_raw
+                    new_remote_i2p_node_port_raw ==
+                    old_remote_i2p_node_port_raw
                 )
         ):
             return
 
-        self.__remote_node_address_port_raw = (
-            new_remote_node_address_port_raw
+        self.__remote_i2p_node_port_raw = (
+            new_remote_i2p_node_port_raw
         )
 
         (
             self.__config_raw_data[
                 'remote_node_address_port_raw'
             ]
-        ) = new_remote_node_address_port_raw
+        ) = new_remote_i2p_node_port_raw
 
         self.__save_config()
 
-        new_remote_node_address_port: (
+        new_remote_i2p_node_port: (
             typing.Optional[
                 int
             ]
         )
 
-        if new_remote_node_address_port_raw.isdigit():
+        if new_remote_i2p_node_port_raw.isdigit():
             try:
-                new_remote_node_address_port = (
+                new_remote_i2p_node_port = (
                     int(
-                        new_remote_node_address_port_raw
+                        new_remote_i2p_node_port_raw
                     )
                 )
 
                 if not (
                         0 <
-                        new_remote_node_address_port <
+                        new_remote_i2p_node_port <
 
                         (
                             1 <<
                             16
                         )
                 ):
-                    new_remote_node_address_port = (
+                    new_remote_i2p_node_port = (
                         None
                     )
             except ValueError:
                 print(
-                    f'Could not parse port {new_remote_node_address_port_raw!r}'
+                    f'Could not parse port {new_remote_i2p_node_port_raw!r}'
                 )
 
-                new_remote_node_address_port = (
+                new_remote_i2p_node_port = (
                     None
                 )
         else:
-            new_remote_node_address_port = (
+            new_remote_i2p_node_port = (
                 None
             )
 
-        self.__remote_node_address_port = (
-            new_remote_node_address_port
+        self.__remote_i2p_node_port = (
+            new_remote_i2p_node_port
         )
 
-        if new_remote_node_address_port is not None:
-            remote_node_address_port_line_edit.setStyleSheet(
+        if new_remote_i2p_node_port is not None:
+            remote_i2p_node_port_line_edit.setStyleSheet(
                 'QLineEdit {'
                 ' background: rgba(0, 255, 0, 0.25);'
                 ' selection-background-color: rgba(0, 255, 0, 0.5);'
                 ' }'
             )
         else:
-            remote_node_address_port_line_edit.setStyleSheet(
+            remote_i2p_node_port_line_edit.setStyleSheet(
                 'QLineEdit {'
                 ' background: rgba(255, 0, 0, 0.25);'
                 ' selection-background-color: rgba(255, 0, 0, 0.5);'
