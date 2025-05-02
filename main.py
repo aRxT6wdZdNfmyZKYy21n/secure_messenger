@@ -277,6 +277,10 @@ class MainWindow(QMainWindow):
             functionality_layout
         )
 
+        window_layout.addWidget(
+            QWidget()
+        )
+
         # Set the central widget of the Window.
 
         self.setCentralWidget(
@@ -632,7 +636,7 @@ class MainWindow(QMainWindow):
 
         (
             self.__config_raw_data[
-                'remote_node_address_port_raw'
+                'remote_i2p_node_port_raw'
             ]
         ) = new_remote_i2p_node_port_raw
 
