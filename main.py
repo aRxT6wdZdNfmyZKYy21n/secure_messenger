@@ -47,6 +47,9 @@ _CONFIG_FILE_PATH = (
     'config.json'
 )
 
+_I2P_SAM_SESSION_NAME = (
+    'session'
+)
 
 class MainWindow(QMainWindow):
     __slots__ = (
@@ -62,6 +65,8 @@ class MainWindow(QMainWindow):
         '__local_i2p_node_sam_port',
         '__local_i2p_node_sam_port_raw',
         '__local_i2p_node_sam_port_line_edit',
+        '__local_i2p_node_sam_session_reader',
+        '__local_i2p_node_sam_session_writer',
         '__remote_i2p_node_address_line_edit',
         '__remote_i2p_node_address_raw',
         '__remote_i2p_node_port',
@@ -108,6 +113,10 @@ class MainWindow(QMainWindow):
                 i2plib.Destination(
                     data=(
                         local_i2p_node_destination_raw
+                    ),
+
+                    has_private_key=(
+                        True
                     )
                 )
             )
@@ -451,6 +460,18 @@ class MainWindow(QMainWindow):
             ]
         ) = None
 
+        self.__local_i2p_node_sam_session_reader: (
+            typing.Optional[
+                asyncio.StreamReader
+            ]
+        ) = None
+
+        self.__local_i2p_node_sam_session_writer: (
+            typing.Optional[
+                asyncio.StreamWriter
+            ]
+        ) = None
+
         self.__remote_i2p_node_address_line_edit = (
             remote_i2p_node_address_line_edit
         )
@@ -477,8 +498,13 @@ class MainWindow(QMainWindow):
             ]
         ) = None
 
-        self.__on_local_i2p_node_sam_ip_address_line_edit_text_changed()
-        self.__on_local_i2p_node_sam_port_line_edit_text_changed()
+        asyncio.create_task(
+            self.__on_local_i2p_node_sam_ip_address_line_edit_text_changed_ex()
+        )
+
+        asyncio.create_task(
+            self.__on_local_i2p_node_sam_port_line_edit_text_changed_ex()
+        )
 
         self.__on_remote_i2p_node_address_line_edit_text_changed()
         self.__on_remote_i2p_node_port_line_edit_text_changed()
@@ -489,6 +515,12 @@ class MainWindow(QMainWindow):
             self
     ) -> None:
         if self.__local_i2p_node_destination is not None:
+            self.__update_local_i2p_node_address()
+
+            await (
+                self.__update_local_i2p_node_sam_session()
+            )
+
             return
 
         local_i2p_node_sam_ip_address = (
@@ -503,6 +535,10 @@ class MainWindow(QMainWindow):
 
             self.__update_local_i2p_node_address()
 
+            await (
+                self.__update_local_i2p_node_sam_session()
+            )
+
             return
 
         local_i2p_node_sam_port = (
@@ -516,6 +552,10 @@ class MainWindow(QMainWindow):
             )
 
             self.__update_local_i2p_node_address()
+
+            await (
+                self.__update_local_i2p_node_sam_session()
+            )
 
             return
 
@@ -534,13 +574,13 @@ class MainWindow(QMainWindow):
                 i2plib.new_destination(
                     sam_address=(
                         local_i2p_node_sam_ip_address_and_port_pair
-                    ),
+                    )
                 )
             )
         )
 
         local_i2p_node_destination_raw = (
-            local_i2p_node_destination.base64
+            local_i2p_node_destination.private_key.base64
         )
 
         (
@@ -552,6 +592,33 @@ class MainWindow(QMainWindow):
         self.__save_config()
 
         self.__update_local_i2p_node_address()
+
+        await (
+            self.__update_local_i2p_node_sam_session()
+        )
+
+    async def __close_local_i2p_node_sam_session(
+            self
+    ) -> None:
+        local_i2p_node_sam_session_reader = (
+            self.__local_i2p_node_sam_session_reader
+        )
+
+        if local_i2p_node_sam_session_reader is not None:
+            self.__local_i2p_node_sam_session_reader = (
+                local_i2p_node_sam_session_reader  # noqa
+            ) = None
+
+        local_i2p_node_sam_session_writer = (
+            self.__local_i2p_node_sam_session_writer
+        )
+
+        if local_i2p_node_sam_session_writer is not None:
+            local_i2p_node_sam_session_writer.close()
+
+            self.__local_i2p_node_sam_session_writer = (
+                local_i2p_node_sam_session_writer  # noqa
+            ) = None
 
     @staticmethod
     def __get_local_i2p_node_address(
@@ -570,7 +637,15 @@ class MainWindow(QMainWindow):
             'N/A'
         )
 
-    def __on_local_i2p_node_sam_ip_address_line_edit_text_changed(
+    @asyncSlot
+    async def __on_local_i2p_node_sam_ip_address_line_edit_text_changed(
+            self
+    ) -> None:
+        await (
+            self.__on_local_i2p_node_sam_ip_address_line_edit_text_changed_ex()
+        )
+
+    async def __on_local_i2p_node_sam_ip_address_line_edit_text_changed_ex(
             self
     ) -> None:
         local_i2p_node_sam_ip_address_line_edit = (
@@ -650,7 +725,19 @@ class MainWindow(QMainWindow):
                 ' }'
             )
 
-    def __on_local_i2p_node_sam_port_line_edit_text_changed(
+        await (
+            self.update_local_i2p_node_destination()
+        )
+
+    @asyncSlot
+    async def __on_local_i2p_node_sam_port_line_edit_text_changed(
+            self
+    ) -> None:
+        await (
+            self.__on_local_i2p_node_sam_port_line_edit_text_changed_ex()
+        )
+
+    async def __on_local_i2p_node_sam_port_line_edit_text_changed_ex(
             self
     ) -> None:
         local_i2p_node_sam_port_line_edit = (
@@ -744,6 +831,10 @@ class MainWindow(QMainWindow):
                 ' selection-background-color: rgba(255, 0, 0, 0.5);'
                 ' }'
             )
+
+        await (
+            self.update_local_i2p_node_destination()
+        )
 
     def __on_remote_i2p_node_address_line_edit_text_changed(
             self
@@ -938,6 +1029,92 @@ class MainWindow(QMainWindow):
         self.__local_i2p_node_address_value_label.setText(
             new_local_i2p_node_address
         )
+
+    async def __update_local_i2p_node_sam_session(
+            self
+    ):
+        if self.__local_i2p_node_sam_session_reader is not None:
+            assert (
+                self.__local_i2p_node_sam_session_writer is not None
+            ), None
+
+            return
+
+        local_i2p_node_destination = (
+            self.__local_i2p_node_destination
+        )
+
+        if local_i2p_node_destination is None:
+            await (
+                self.__close_local_i2p_node_sam_session()
+            )
+
+            return
+
+        local_i2p_node_sam_ip_address = (
+            self.__local_i2p_node_sam_ip_address
+        )
+
+        if local_i2p_node_sam_ip_address is None:
+            await (
+                self.__close_local_i2p_node_sam_session()
+            )
+
+            return
+
+        local_i2p_node_sam_port = (
+            self.__local_i2p_node_sam_port
+        )
+
+        if local_i2p_node_sam_port is None:
+            await (
+                self.__close_local_i2p_node_sam_session()
+            )
+
+            return
+
+        print(
+            'Trying to create session...'
+        )
+
+        local_i2p_node_sam_ip_address_and_port_pair = (
+            str(
+                local_i2p_node_sam_ip_address
+            ),
+
+            local_i2p_node_sam_port
+        )
+
+        (
+            local_i2p_node_sam_session_reader,
+            local_i2p_node_sam_session_writer
+        ) = (
+            await (
+                i2plib.create_session(
+                    session_name=(
+                        _I2P_SAM_SESSION_NAME
+                    ),
+
+                    sam_address=(
+                        local_i2p_node_sam_ip_address_and_port_pair
+                    ),
+
+                    destination=(
+                        local_i2p_node_destination
+                    )
+                )
+            )
+        )
+
+        self.__local_i2p_node_sam_session_reader = (
+            local_i2p_node_sam_session_reader
+        )
+
+        self.__local_i2p_node_sam_session_writer = (
+            local_i2p_node_sam_session_writer
+        )
+
+        print('Session created')
 
 
 async def run_application(
