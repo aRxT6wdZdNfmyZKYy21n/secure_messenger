@@ -1,6 +1,7 @@
 import asyncio
 import codecs
 import logging
+import uuid
 
 import sys
 import typing
@@ -48,7 +49,7 @@ _CONFIG_FILE_PATH = (
 )
 
 _I2P_SAM_SESSION_NAME = (
-    'session'
+    uuid.uuid4().hex
 )
 
 class MainWindow(QMainWindow):
