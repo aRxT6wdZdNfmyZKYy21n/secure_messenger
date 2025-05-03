@@ -12,7 +12,7 @@ from ipaddress import (
     IPv6Address
 )
 
-import i2plib
+import i2plib  # noqa
 import orjson
 
 from PyQt6.QtCore import (
@@ -611,7 +611,7 @@ class MainWindow(QMainWindow):
                 remote_i2p_node_destination_bytes.decode().rstrip()
             )
 
-            remote_i2p_node_destination = (
+            remote_i2p_node_destination = (  # TODO: check equality with settled remote I2P node address
                 i2plib.Destination(
                     remote_i2p_node_destination_raw
                 )
