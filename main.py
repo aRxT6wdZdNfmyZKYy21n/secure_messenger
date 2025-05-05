@@ -50,6 +50,42 @@ _CONFIG_FILE_PATH = (
 )
 
 
+class _Connection(object):
+    __slots__ = (
+        '__reader',
+        '__writer'
+    )
+
+    def __init__(
+            self,
+
+            reader: (
+                asyncio.StreamReader
+            ),
+
+            writer: (
+                asyncio.StreamWriter
+            ),
+    ) -> None:
+        super(
+            _Connection,
+            self
+        ).__init__()
+
+        self.__reader = (
+            reader
+        )
+
+        self.__writer = (
+            writer
+        )
+
+    def close(
+            self
+    ) -> None:
+        self.__writer.close()
+
+
 class MainWindow(QMainWindow):
     __slots__ = (
         '__config_raw_data',
@@ -65,11 +101,9 @@ class MainWindow(QMainWindow):
         '__local_i2p_node_sam_port',
         '__local_i2p_node_sam_port_raw',
         '__local_i2p_node_sam_port_line_edit',
-        '__local_i2p_node_sam_session_control_reader',
-        '__local_i2p_node_sam_session_control_writer',
+        '__local_i2p_node_sam_session_control_connection',
         '__local_i2p_node_sam_session_creation_event',
-        '__local_i2p_node_sam_session_data_reader',
-        '__local_i2p_node_sam_session_data_writer',
+        '__local_i2p_node_sam_session_data_connection',
         '__local_i2p_node_sam_session_name',
         '__local_i2p_node_sam_session_status_key_label',
         '__local_i2p_node_sam_session_status_raw',
@@ -528,15 +562,9 @@ class MainWindow(QMainWindow):
             ]
         ) = None
 
-        self.__local_i2p_node_sam_session_control_reader: (
+        self.__local_i2p_node_sam_session_control_connection: (
             typing.Optional[
-                asyncio.StreamReader
-            ]
-        ) = None
-
-        self.__local_i2p_node_sam_session_control_writer: (
-            typing.Optional[
-                asyncio.StreamWriter
+                _Connection
             ]
         ) = None
 
@@ -544,15 +572,9 @@ class MainWindow(QMainWindow):
             asyncio.Event()
         )
 
-        self.__local_i2p_node_sam_session_data_reader: (
+        self.__local_i2p_node_sam_session_data_connection: (
             typing.Optional[
-                asyncio.StreamReader
-            ]
-        ) = None
-
-        self.__local_i2p_node_sam_session_data_writer: (
-            typing.Optional[
-                asyncio.StreamWriter
+                _Connection
             ]
         ) = None
 
@@ -619,7 +641,7 @@ class MainWindow(QMainWindow):
             self
     ) -> None:
         while True:
-            if self.__local_i2p_node_sam_session_control_reader is None:
+            if self.__local_i2p_node_sam_session_control_connection is None:
                 await (
                     self.__local_i2p_node_sam_session_creation_event.wait()
                 )
@@ -673,12 +695,11 @@ class MainWindow(QMainWindow):
                 )
             )
 
-            self.__local_i2p_node_sam_session_data_reader = (
-                local_i2p_node_sam_session_data_reader
-            )
-
-            self.__local_i2p_node_sam_session_data_writer = (
-                local_i2p_node_sam_session_data_writer
+            self.__local_i2p_node_sam_session_data_connection = (
+                _Connection(
+                    local_i2p_node_sam_session_data_reader,
+                    local_i2p_node_sam_session_data_writer
+                )
             )
 
             print(
@@ -687,7 +708,7 @@ class MainWindow(QMainWindow):
 
             remote_i2p_node_destination_bytes = (
                 await (
-                    self.__local_i2p_node_sam_session_data_reader.readline()
+                    local_i2p_node_sam_session_data_reader.readline()
                 )
             )
 
@@ -720,14 +741,10 @@ class MainWindow(QMainWindow):
                 )
 
                 await (
-                    self.__close_local_i2p_node_sam_session_data_reader_and_writer()
+                    self.__close_local_i2p_node_sam_session_data_connection()
                 )
 
-                local_i2p_node_sam_session_data_reader = (  # noqa
-                    None
-                )
-
-                local_i2p_node_sam_session_data_writer = (  # noqa
+                local_i2p_node_sam_session_data_connection = (  # noqa
                     None
                 )
 
@@ -821,52 +838,34 @@ class MainWindow(QMainWindow):
             self.__update_local_i2p_node_sam_session()
         )
 
-    async def __close_local_i2p_node_sam_session_control_reader_and_writer(
+    async def __close_local_i2p_node_sam_session_control_connection(
             self
     ) -> None:
-        local_i2p_node_sam_session_control_reader = (
-            self.__local_i2p_node_sam_session_control_reader
+        local_i2p_node_sam_session_control_connection = (
+            self.__local_i2p_node_sam_session_control_connection
         )
 
-        if local_i2p_node_sam_session_control_reader is not None:
-            self.__local_i2p_node_sam_session_control_reader = (
-                local_i2p_node_sam_session_control_reader  # noqa
-            ) = None
+        if local_i2p_node_sam_session_control_connection is not None:
+            local_i2p_node_sam_session_control_connection.close()
 
-        local_i2p_node_sam_session_control_writer = (
-            self.__local_i2p_node_sam_session_control_writer
-        )
-
-        if local_i2p_node_sam_session_control_writer is not None:
-            local_i2p_node_sam_session_control_writer.close()
-
-            self.__local_i2p_node_sam_session_control_writer = (
-                local_i2p_node_sam_session_control_writer  # noqa
+            self.__local_i2p_node_sam_session_control_connection = (
+                local_i2p_node_sam_session_control_connection  # noqa
             ) = None
 
         self.__local_i2p_node_sam_session_creation_event.clear()
 
-    async def __close_local_i2p_node_sam_session_data_reader_and_writer(
+    async def __close_local_i2p_node_sam_session_data_connection(
             self
     ) -> None:
-        local_i2p_node_sam_session_data_reader = (
-            self.__local_i2p_node_sam_session_data_reader
+        local_i2p_node_sam_session_data_connection = (
+            self.__local_i2p_node_sam_session_data_connection
         )
 
-        if local_i2p_node_sam_session_data_reader is not None:
-            self.__local_i2p_node_sam_session_data_reader = (
-                local_i2p_node_sam_session_data_reader  # noqa
-            ) = None
+        if local_i2p_node_sam_session_data_connection is not None:
+            local_i2p_node_sam_session_data_connection.close()
 
-        local_i2p_node_sam_session_data_writer = (
-            self.__local_i2p_node_sam_session_data_writer
-        )
-
-        if local_i2p_node_sam_session_data_writer is not None:
-            local_i2p_node_sam_session_data_writer.close()
-
-            self.__local_i2p_node_sam_session_data_writer = (
-                local_i2p_node_sam_session_data_writer  # noqa
+            self.__local_i2p_node_sam_session_data_connection = (
+                local_i2p_node_sam_session_data_connection  # noqa
             ) = None
 
     @staticmethod
@@ -1289,11 +1288,7 @@ class MainWindow(QMainWindow):
             self
     ):
         async with self.__local_i2p_node_sam_session_update_lock:
-            if self.__local_i2p_node_sam_session_control_reader is not None:
-                assert (
-                    self.__local_i2p_node_sam_session_control_writer is not None
-                ), None
-
+            if self.__local_i2p_node_sam_session_control_connection is not None:
                 return
 
             local_i2p_node_destination = (
@@ -1302,11 +1297,11 @@ class MainWindow(QMainWindow):
 
             if local_i2p_node_destination is None:
                 await (
-                    self.__close_local_i2p_node_sam_session_data_reader_and_writer()
+                    self.__close_local_i2p_node_sam_session_data_connection()
                 )
 
                 await (
-                    self.__close_local_i2p_node_sam_session_control_reader_and_writer()
+                    self.__close_local_i2p_node_sam_session_control_connection()
                 )
 
                 await (
@@ -1323,11 +1318,11 @@ class MainWindow(QMainWindow):
 
             if local_i2p_node_sam_ip_address is None:
                 await (
-                    self.__close_local_i2p_node_sam_session_data_reader_and_writer()
+                    self.__close_local_i2p_node_sam_session_data_connection()
                 )
 
                 await (
-                    self.__close_local_i2p_node_sam_session_control_reader_and_writer()
+                    self.__close_local_i2p_node_sam_session_control_connection()
                 )
 
                 await (
@@ -1344,11 +1339,11 @@ class MainWindow(QMainWindow):
 
             if local_i2p_node_sam_port is None:
                 await (
-                    self.__close_local_i2p_node_sam_session_data_reader_and_writer()
+                    self.__close_local_i2p_node_sam_session_data_connection()
                 )
 
                 await (
-                    self.__close_local_i2p_node_sam_session_control_reader_and_writer()
+                    self.__close_local_i2p_node_sam_session_control_connection()
                 )
 
                 await (
@@ -1411,12 +1406,11 @@ class MainWindow(QMainWindow):
 
                     continue
 
-            self.__local_i2p_node_sam_session_control_reader = (
-                local_i2p_node_sam_session_control_reader
-            )
-
-            self.__local_i2p_node_sam_session_control_writer = (
-                local_i2p_node_sam_session_control_writer
+            self.__local_i2p_node_sam_session_control_connection = (
+                _Connection(
+                    local_i2p_node_sam_session_control_reader,
+                    local_i2p_node_sam_session_control_writer
+                )
             )
 
             await (
