@@ -1,11 +1,21 @@
 import asyncio
 import codecs
+import io
 import logging
 import os
 import uuid
 
 import sys
 import typing
+
+from collections import (
+    defaultdict
+)
+
+from datetime import (
+    datetime,
+    timezone
+)
 
 from ipaddress import (
     ip_address,
@@ -25,6 +35,7 @@ from PyQt6.QtWidgets import (
     QGridLayout,
     QLineEdit,
     QMainWindow,
+    QPushButton,
     QTextEdit,
     QVBoxLayout,
     QWidget
@@ -46,6 +57,7 @@ from utils.qt import (
 from utils.time import (
     get_aware_current_timestamp_ms
 )
+
 
 _CONFIG_FILE_NAME = (
     os.getenv(
@@ -157,10 +169,13 @@ class MainWindow(QMainWindow):
     __slots__ = (
         '__config_raw_data',
         '__conversation_text_edit',
+        '__last_remote_i2p_node_ping_timestamp_ms',
         '__local_i2p_node_address',
         '__local_i2p_node_address_key_label',
         '__local_i2p_node_address_value_label',
         '__local_i2p_node_destination',
+        '__local_i2p_node_message_raw_data_by_id_map',
+        '__local_i2p_node_pending_message_raw_data_by_id_map',
         '__local_i2p_node_sam_ip_address',
         '__local_i2p_node_sam_ip_address_line_edit',
         '__local_i2p_node_sam_port',
@@ -183,9 +198,11 @@ class MainWindow(QMainWindow):
         '__local_i2p_node_sam_session_status_raw',
         '__local_i2p_node_sam_session_status_value_label',
         '__local_i2p_node_sam_session_update_lock',
-        '__last_remote_i2p_node_ping_timestamp_ms',
+        '__message_send_button',
+        '__message_text_edit',
         '__remote_i2p_node_address_line_edit',
         '__remote_i2p_node_address_raw',
+        '__remote_i2p_node_message_raw_data_by_id_map',
         '__remote_i2p_node_status_key_label',
         '__remote_i2p_node_status_raw',
         '__remote_i2p_node_status_value_label'
@@ -605,7 +622,11 @@ class MainWindow(QMainWindow):
             info_layout
         )
 
-        # Filling conversation text edit
+        # Filling conversation layout
+
+        conversation_layout = (
+            QGridLayout()
+        )
 
         conversation_text_edit = (
             QTextEdit()
@@ -615,12 +636,54 @@ class MainWindow(QMainWindow):
             'Диалог с собеседником'
         )
 
-        conversation_text_edit.setEnabled(
-            False
+        conversation_text_edit.setReadOnly(
+            True
         )
 
-        window_layout.addWidget(
-            conversation_text_edit
+        message_send_button = (
+            QPushButton()
+        )
+
+        message_send_button.setText(
+            'Отправить сообщение'
+        )
+
+        message_send_button.clicked.connect(  # noqa
+            self.__on_message_send_button_clicked
+        )
+
+        message_text_edit = (
+            QTextEdit()
+        )
+
+        message_text_edit.setPlaceholderText(
+            'Введите сообщение...'
+        )
+
+        # TODO: on text changed call handler && activate or deactivate message send button
+
+        conversation_layout.addWidget(
+            conversation_text_edit,
+            0, 0, 1, 8
+        )
+
+        conversation_layout.setRowMinimumHeight(  # TODO: make this better
+            0,
+            10000
+        )
+
+        conversation_layout.addWidget(
+            message_text_edit,
+            1, 0, 1, 7
+        )
+
+        conversation_layout.addWidget(
+            message_send_button,
+            1, 7, 1, 1
+        )
+
+        window_layout.addLayout(
+            conversation_layout
         )
 
         # Set the central widget of the Window.
@@ -657,6 +720,10 @@ class MainWindow(QMainWindow):
             conversation_text_edit
         )
 
+        self.__last_remote_i2p_node_ping_timestamp_ms = (
+            None
+        )
+
         self.__local_i2p_node_address = (
             local_i2p_node_address
         )
@@ -672,6 +739,20 @@ class MainWindow(QMainWindow):
         self.__local_i2p_node_destination = (
             local_i2p_node_destination
         )
+
+        self.__local_i2p_node_message_raw_data_by_id_map: (
+            typing.Dict[
+                int,
+                typing.Dict
+            ]
+        ) = {}
+
+        self.__local_i2p_node_pending_message_raw_data_by_id_map: (
+            typing.Dict[
+                int,
+                typing.Dict
+            ]
+        ) = {}
 
         self.__local_i2p_node_sam_ip_address: (
             typing.Optional[
@@ -774,8 +855,12 @@ class MainWindow(QMainWindow):
             asyncio.Lock()
         )
 
-        self.__last_remote_i2p_node_ping_timestamp_ms = (
-            None
+        self.__message_send_button = (
+            message_send_button
+        )
+
+        self.__message_text_edit = (
+            message_text_edit
         )
 
         self.__remote_i2p_node_address_line_edit = (
@@ -787,6 +872,13 @@ class MainWindow(QMainWindow):
                 str
             ]
         ) = None
+
+        self.__remote_i2p_node_message_raw_data_by_id_map: (
+            typing.Dict[
+                int,
+                typing.Dict
+            ]
+        ) = {}
 
         self.__remote_i2p_node_status_key_label = (
             remote_i2p_node_status_key_label
@@ -1083,6 +1175,12 @@ class MainWindow(QMainWindow):
                 ),
 
                 asyncio.ensure_future(
+                    self.__start_local_i2p_node_sam_session_data_connection_sending_loop(
+                        local_i2p_node_sam_session_incoming_data_connection
+                    )
+                ),
+
+                asyncio.ensure_future(
                     self.__start_local_i2p_node_sam_session_data_connection_receiving_loop(
                         local_i2p_node_sam_session_incoming_data_connection
                     )
@@ -1121,6 +1219,112 @@ class MainWindow(QMainWindow):
 
                 continue
 
+    @staticmethod
+    def __send_ack_raw_data(
+            connection: (
+                _Connection
+            ),
+
+            message_id: int
+    ) -> None:
+        raw_data = {
+            'message_id': (
+                message_id
+            ),
+
+            'type': (
+                'ack'
+            )
+        }
+
+        connection.send_raw_data(
+            raw_data
+        )
+
+    @staticmethod
+    def __send_message_raw_data(
+            connection: (
+                _Connection
+            ),
+
+            message_id: int,
+
+            message_raw_data: (
+                typing.Dict
+            )
+    ) -> None:
+        raw_data = (
+            message_raw_data.copy()
+        )
+
+        raw_data.update({
+            'id': (
+                message_id
+            ),
+
+            'type': (
+                'message'
+            )
+        })
+
+        connection.send_raw_data(
+            raw_data
+        )
+
+    @staticmethod
+    async def __start_local_i2p_node_sam_session_data_connection_pinging_loop(
+            connection: (
+                _Connection
+            )
+    ) -> None:
+        while True:
+            connection.send_raw_data({
+                'type': (
+                    'ping'
+                )
+            })
+
+            await (
+                asyncio.sleep(
+                    5.0  # s
+                )
+            )
+
+    async def __start_local_i2p_node_sam_session_data_connection_sending_loop(
+            self,
+
+            connection: (
+                _Connection
+            )
+    ) -> None:
+        local_i2p_node_pending_message_raw_data_by_id_map = (
+            self.__local_i2p_node_pending_message_raw_data_by_id_map
+        )
+
+        while True:
+            for pending_message_id in (
+                    sorted(
+                        local_i2p_node_pending_message_raw_data_by_id_map
+                    )
+            ):
+                pending_message_raw_data = (
+                    local_i2p_node_pending_message_raw_data_by_id_map[
+                        pending_message_id
+                    ]
+                )
+
+                self.__send_message_raw_data(
+                    connection,
+                    pending_message_id,
+                    pending_message_raw_data
+                )
+
+            await (
+                asyncio.sleep(
+                    1.0  # s
+                )
+            )
+
     async def __start_local_i2p_node_sam_session_data_connection_receiving_loop(
             self,
 
@@ -1128,6 +1332,14 @@ class MainWindow(QMainWindow):
                 _Connection
             )
     ) -> None:
+        local_i2p_node_pending_message_raw_data_by_id_map = (
+            self.__local_i2p_node_pending_message_raw_data_by_id_map
+        )
+
+        remote_i2p_node_message_raw_data_by_id_map = (
+            self.__remote_i2p_node_message_raw_data_by_id_map
+        )
+
         while True:
             raw_data = (
                 await (
@@ -1142,51 +1354,236 @@ class MainWindow(QMainWindow):
                     BrokenPipeError
                 )
 
-            message_type: (
+            raw_data_type: (
                 typing.Optional[
                     str
                 ]
             ) = (
                 raw_data.get(
-                    'message_type'
+                    'type'
                 )
             )
 
-            if message_type is None:
+            if raw_data_type is None:
                 print(
                     '[WARNING]'
-                    ': Unsupported message type inside raw data'
+                    ': Raw data without type'
                     f': {raw_data}'
                 )
 
                 continue
 
             if (
-                    message_type ==
+                    raw_data_type ==
+                    'ack'
+            ):
+                ack_raw_data = (
+                    raw_data
+                )
+
+                message_id: (
+                    typing.Optional[
+                        int
+                    ]
+                ) = (
+                    ack_raw_data.pop(
+                        'message_id',
+                        None
+                    )
+                )
+
+                if message_id is None:
+                    print(
+                        '[WARNING]'
+                        ': ACK raw data without message ID field'
+                        f': {ack_raw_data}'
+                    )
+
+                    continue
+                elif (
+                        type(
+                            message_id
+                        ) is not
+
+                        int
+                ):
+                    print(
+                        '[WARNING]'
+                        ': ACK raw data have incorrect message ID field type'
+                        f': {ack_raw_data}'
+                    )
+
+                    continue
+
+                (
+                    local_i2p_node_pending_message_raw_data_by_id_map.pop(
+                        message_id,
+                        None
+                    )
+                )
+
+                self.__update_conversation()
+            elif (
+                    raw_data_type ==
                     'ping'
             ):
                 self.__last_remote_i2p_node_ping_timestamp_ms = (
                     get_aware_current_timestamp_ms()
                 )
-
-    @staticmethod
-    async def __start_local_i2p_node_sam_session_data_connection_pinging_loop(
-            connection: (
-                _Connection
-            )
-    ) -> None:
-        while True:
-            connection.send_raw_data({
-                'message_type': (
-                    'ping'
+            elif (
+                    raw_data_type ==
+                    'message'
+            ):
+                message_raw_data = (
+                    raw_data
                 )
-            })
 
-            await (
-                asyncio.sleep(
-                    5.0  # s
+                message_id: (
+                    typing.Optional[
+                        int
+                    ]
+                ) = (
+                    message_raw_data.pop(
+                        'id',
+                        None
+                    )
                 )
-            )
+
+                if message_id is None:
+                    print(
+                        '[WARNING]'
+                        ': Message raw data without ID field'
+                        f': {message_raw_data}'
+                    )
+
+                    continue
+                elif (
+                        type(
+                            message_id
+                        ) is not
+
+                        int
+                ):
+                    print(
+                        '[WARNING]'
+                        ': Message raw data have incorrect ID field type'
+                        f': {message_raw_data}'
+                    )
+
+                    continue
+                # TODO: check message_id >= 0
+
+                if self.__local_i2p_node_sam_session_control_connection is not None:
+                    for data_connection in (
+                            self.__local_i2p_node_sam_session_incoming_data_connection,
+                            self.__local_i2p_node_sam_session_outgoing_data_connection
+                    ):
+                        if data_connection is not None:
+                            self.__send_ack_raw_data(
+                                data_connection,
+                                message_id
+                            )
+
+                            break
+
+                if (
+                        message_id in
+                        remote_i2p_node_message_raw_data_by_id_map
+                ):
+                    continue
+
+                message_text: (
+                    typing.Optional[
+                        str
+                    ]
+                ) = (
+                    message_raw_data.pop(
+                        'text',
+                        None
+                    )
+                )
+
+                if message_text is None:
+                    print(
+                        '[WARNING]'
+                        ': Message raw data without text field'
+                        f': {message_raw_data}'
+                    )
+                elif (
+                        type(
+                            message_text
+                        ) is not
+
+                        str
+                ):
+                    print(
+                        '[WARNING]'
+                        ': Message raw data have incorrect text field type'
+                        f': {message_raw_data}'
+                    )
+
+                    continue
+                # TODO: check text is not empty (for MVP)
+
+                message_timestamp_ms: (
+                    typing.Optional[
+                        int
+                    ]
+                ) = (
+                    message_raw_data.pop(
+                        'timestamp_ms',
+                        None
+                    )
+                )
+
+                if message_timestamp_ms is None:
+                    print(
+                        '[WARNING]'
+                        ': Message raw data without timestamp (ms) field'
+                        f': {message_raw_data}'
+                    )
+                elif (
+                        type(
+                            message_timestamp_ms
+                        ) is not
+
+                        int
+                ):
+                    print(
+                        '[WARNING]'
+                        ': Message raw data have incorrect timestamp (ms) field type'
+                        f': {message_raw_data}'
+                    )
+
+                    continue
+                # TODO: check message_timestamp_ms > 0
+
+                if message_raw_data:
+                    print(
+                        '[WARNING]'
+                        ': Message raw data has extra fields'
+                        f': {message_raw_data}'
+                    )
+
+                message_raw_data = {
+                    'text': (
+                        message_text
+                    ),
+
+                    'timestamp_ms': (
+                        message_timestamp_ms
+                    )
+                }
+
+                (
+                    remote_i2p_node_message_raw_data_by_id_map[
+                        message_id
+                    ]
+                ) = (
+                    message_raw_data
+                )
+
+                self.__update_conversation()
 
     async def start_local_i2p_node_sam_session_outgoing_data_connection_creation_loop(
             self
@@ -1388,6 +1785,12 @@ class MainWindow(QMainWindow):
             tasks = (
                 asyncio.ensure_future(
                     self.__start_local_i2p_node_sam_session_data_connection_pinging_loop(
+                        local_i2p_node_sam_session_outgoing_data_connection
+                    )
+                ),
+
+                asyncio.ensure_future(
+                    self.__start_local_i2p_node_sam_session_data_connection_sending_loop(
                         local_i2p_node_sam_session_outgoing_data_connection
                     )
                 ),
@@ -1847,6 +2250,82 @@ class MainWindow(QMainWindow):
         )
 
     @asyncSlot()
+    async def __on_message_send_button_clicked(
+            self
+    ) -> None:
+        message_text_edit = (
+            self.__message_text_edit
+        )
+
+        message_text = (
+            message_text_edit.toPlainText().strip()
+        )
+
+        if not message_text:
+            return
+
+        local_i2p_node_message_raw_data_by_id_map = (
+            self.__local_i2p_node_message_raw_data_by_id_map
+        )
+
+        message_id: int
+
+        if local_i2p_node_message_raw_data_by_id_map:
+            message_id = (
+                max(
+                    local_i2p_node_message_raw_data_by_id_map
+                ) +
+
+                1
+            )
+        else:
+            message_id = 0
+
+        message_raw_data = {
+            'text': (
+                message_text
+            ),
+
+            'timestamp_ms': (
+                get_aware_current_timestamp_ms()
+            )
+        }
+
+        (
+            local_i2p_node_message_raw_data_by_id_map[
+                message_id
+            ]
+        ) = message_raw_data
+
+        (
+            self.__local_i2p_node_pending_message_raw_data_by_id_map[
+                message_id
+            ]
+        ) = message_raw_data
+
+        self.__update_conversation()
+
+        if self.__local_i2p_node_sam_session_control_connection is not None:
+            for data_connection in (
+                    self.__local_i2p_node_sam_session_incoming_data_connection,
+                    self.__local_i2p_node_sam_session_outgoing_data_connection
+            ):
+                if data_connection is not None:
+                    self.__send_message_raw_data(
+                        data_connection,
+                        message_id,
+                        message_raw_data
+                    )
+
+                    break
+
+        message_text_edit.setText(
+            ''
+        )
+
+        # TODO: update message sending button active flag
+
+    @asyncSlot()
     async def __on_remote_i2p_node_address_line_edit_text_changed(
             self
     ) -> None:
@@ -1931,6 +2410,221 @@ class MainWindow(QMainWindow):
                     self.__config_raw_data
                 ).decode()
             )
+
+    def __update_conversation(
+            self
+    ) -> None:
+        conversation_message_raw_data_list_by_timestamp_ms_map = (
+            defaultdict(
+                list
+            )
+        )
+
+        local_i2p_node_message_raw_data_by_id_map = (
+            self.__local_i2p_node_message_raw_data_by_id_map
+        )
+
+        local_i2p_node_pending_message_raw_data_by_id_map = (
+            self.__local_i2p_node_pending_message_raw_data_by_id_map
+        )
+
+        remote_i2p_node_message_raw_data_by_id_map = (
+            self.__remote_i2p_node_message_raw_data_by_id_map
+        )
+
+        for is_own_messages, i2p_node_message_raw_data_by_id_map in (
+                (
+                    True,
+                    local_i2p_node_message_raw_data_by_id_map
+                ),
+
+                (
+                    False,
+                    remote_i2p_node_message_raw_data_by_id_map
+                )
+        ):
+            for message_id, message_raw_data in (
+                    i2p_node_message_raw_data_by_id_map.items()
+            ):
+                message_raw_data = (
+                    message_raw_data.copy()
+                )
+
+                (
+                    message_raw_data[
+                        'is_own'
+                    ]
+                ) = is_own_messages
+
+                if is_own_messages:
+                    is_message_delivered = (
+                        message_id not in
+                        local_i2p_node_pending_message_raw_data_by_id_map
+                    )
+
+                    (
+                        message_raw_data[
+                            'is_delivered'
+                        ]
+                    ) = is_message_delivered
+
+                timestamp_ms: int = (
+                    message_raw_data[
+                        'timestamp_ms'
+                    ]
+                )
+
+                conversation_message_raw_data_list = (
+                    conversation_message_raw_data_list_by_timestamp_ms_map[
+                        timestamp_ms
+                    ]
+                )
+
+                conversation_message_raw_data_list.append(
+                    message_raw_data
+                )
+
+        conversation_text_edit = (
+            self.__conversation_text_edit
+        )
+
+        new_conversation_html_io = (
+            io.StringIO()
+        )
+
+        for message_idx, timestamp_ms in (
+                enumerate(
+                    sorted(
+                        conversation_message_raw_data_list_by_timestamp_ms_map
+                    )
+                )
+        ):
+            # if message_idx:
+            #     new_conversation_html_io.write(
+            #         '<br>' '\n'
+            #     )
+
+            new_conversation_html_io.write(
+                f'<div id="message_{message_idx}">'
+            )
+
+            message_datetime = (
+                datetime.fromtimestamp(
+                    (
+                        timestamp_ms //
+                        1000  # ms
+                    ),
+
+                    tz=(
+                        timezone.utc
+                    )
+                )
+            )
+
+            new_conversation_html_io.write(
+                '    <div>'
+                f'        [{message_datetime.isoformat()}]'  # TODO
+                '    </div>'
+            )
+
+            conversation_message_raw_data_list = (
+                conversation_message_raw_data_list_by_timestamp_ms_map.get(
+                    timestamp_ms
+                )
+            )
+
+            assert (
+                conversation_message_raw_data_list is not None
+            ), None
+
+            for conversation_message_raw_data in (
+                    conversation_message_raw_data_list
+            ):
+                is_own_message: bool = (
+                    conversation_message_raw_data[
+                        'is_own'
+                    ]
+                )
+
+                if is_own_message:
+                    new_conversation_html_io.write(
+                        '\n'.join((
+                            '    <div>'
+                            f'        [Вы]'
+                            '    </div>'
+                        ))
+                    )
+
+                    is_message_delivered: bool = (
+                        conversation_message_raw_data[
+                            'is_delivered'
+                        ]
+                    )
+
+                    if is_message_delivered:
+                        new_conversation_html_io.write(
+                            '\n'.join((
+                                '    <div>'
+                                f'        [✅ Доставлено]'
+                                '    </div>'
+                            ))
+                        )
+                    else:
+                        new_conversation_html_io.write(
+                            '\n'.join((
+                                '    <div>'
+                                f'        [⌛ Ожидание доставки...]'
+                                '    </div>'
+                            ))
+                        )
+                else:
+                    new_conversation_html_io.write(
+                        '\n'.join((
+                            '    <div>'
+                            f'        [Собеседник]'
+                            '    </div>'
+                        ))
+                    )
+
+                conversation_message_text = (
+                    conversation_message_raw_data[
+                        'text'
+                    ]
+                )
+
+                new_conversation_html_io.write(
+                    '\n'.join((
+                        '    <div>'
+                        f'        {conversation_message_text}'
+                        '    </div>'
+                    ))
+                )
+
+            new_conversation_html_io.write(
+                '</div>'
+            )
+
+        new_conversation_html_io.seek(
+            0
+        )
+
+        new_conversation_html = (
+            new_conversation_html_io.read().strip()
+        )
+
+        old_conversation_html = (
+            conversation_text_edit.toHtml().strip()
+        )
+
+        if (
+                new_conversation_html ==
+                old_conversation_html
+        ):
+            return
+
+        conversation_text_edit.setHtml(
+            new_conversation_html
+        )
 
     def __update_local_i2p_node_address(
             self
