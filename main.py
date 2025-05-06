@@ -842,6 +842,22 @@ class MainWindow(QMainWindow):
                     )
                 )
 
+                await (
+                    self.__close_local_i2p_node_sam_session_control_connection()
+                )
+
+                await (
+                    self.__close_local_i2p_node_sam_session_incoming_data_connection()
+                )
+
+                local_i2p_node_sam_session_incoming_data_connection = (  # noqa
+                    None
+                )
+
+                await (
+                    self.__update_local_i2p_node_sam_session()
+                )
+
                 await (  # TODO: make this better
                     asyncio.sleep(
                         1.0
@@ -870,6 +886,31 @@ class MainWindow(QMainWindow):
                     local_i2p_node_sam_session_incoming_data_reader.readline()
                 )
             )
+
+            if not remote_i2p_node_destination_bytes:
+                # Connection was closed
+
+                await (
+                    self.__close_local_i2p_node_sam_session_incoming_data_connection()
+                )
+
+                local_i2p_node_sam_session_incoming_data_connection = (  # noqa
+                    None
+                )
+
+                await (
+                    self.__update_local_i2p_node_sam_session_incoming_data_connection_status(
+                        'Прервано'
+                    )
+                )
+
+                await (  # TODO: make this better
+                    asyncio.sleep(
+                        1.0
+                    )
+                )
+
+                continue
 
             remote_i2p_node_destination_raw = (
                 remote_i2p_node_destination_bytes.decode().rstrip()
@@ -1210,6 +1251,14 @@ class MainWindow(QMainWindow):
                     self.__update_local_i2p_node_sam_session_outgoing_data_connection_status(
                         'Ошибка: сессии не существует'
                     )
+                )
+
+                await (
+                    self.__close_local_i2p_node_sam_session_control_connection()
+                )
+
+                await (
+                    self.__update_local_i2p_node_sam_session()
                 )
 
                 await (  # TODO: make this better
