@@ -1618,37 +1618,6 @@ class MainWindow(QMainWindow):
                     continue
                 # TODO: check text is not empty (for MVP)
 
-                message_timestamp_ms: (
-                    typing.Optional[
-                        int
-                    ]
-                ) = (
-                    message_raw_data.pop(
-                        'timestamp_ms',
-                        None
-                    )
-                )
-
-                if message_timestamp_ms is None:
-                    logger.warning(
-                        ': Message raw data without timestamp (ms) field'
-                        f': {message_raw_data}'
-                    )
-                elif (
-                        type(
-                            message_timestamp_ms
-                        ) is not
-
-                        int
-                ):
-                    logger.warning(
-                        ': Message raw data have incorrect timestamp (ms) field type'
-                        f': {message_raw_data}'
-                    )
-
-                    continue
-                # TODO: check message_timestamp_ms > 0
-
                 if message_raw_data:
                     logger.warning(
                         'Message raw data has extra fields'
@@ -1661,7 +1630,7 @@ class MainWindow(QMainWindow):
                     ),
 
                     'timestamp_ms': (
-                        message_timestamp_ms
+                        get_aware_current_timestamp_ms()
                     )
                 }
 
@@ -2369,7 +2338,11 @@ class MainWindow(QMainWindow):
         else:
             message_id = 0
 
-        message_raw_data = {
+        (
+            local_i2p_node_message_raw_data_by_id_map[
+                message_id
+            ]
+        ) = {
             'text': (
                 message_text
             ),
@@ -2379,17 +2352,15 @@ class MainWindow(QMainWindow):
             )
         }
 
-        (
-            local_i2p_node_message_raw_data_by_id_map[
-                message_id
-            ]
-        ) = message_raw_data
-
-        (
+        pending_message_raw_data = (
             self.__local_i2p_node_pending_message_raw_data_by_id_map[
                 message_id
             ]
-        ) = message_raw_data
+        ) = {
+            'text': (
+                message_text
+            )
+        }
 
         self.__update_conversation()
 
@@ -2402,7 +2373,7 @@ class MainWindow(QMainWindow):
                     self.__send_message_raw_data(
                         data_connection,
                         message_id,
-                        message_raw_data
+                        pending_message_raw_data
                     )
 
                     break
