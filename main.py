@@ -2610,9 +2610,7 @@ class MainWindow(QMainWindow):
             )
 
             new_conversation_html_io.write(
-                '    <div>'
-                f'        [{message_datetime.isoformat()}]'  # TODO
-                '    </div>'
+                f'[{message_datetime.astimezone().isoformat()}]',  # TODO
             )
 
             conversation_message_raw_data_list = (
@@ -2636,11 +2634,7 @@ class MainWindow(QMainWindow):
 
                 if is_own_message:
                     new_conversation_html_io.write(
-                        '\n'.join((
-                            '    <div>'
-                            f'        [Вы]'
-                            '    </div>'
-                        ))
+                        f'[Вы]'
                     )
 
                     is_message_delivered: bool = (
@@ -2651,27 +2645,15 @@ class MainWindow(QMainWindow):
 
                     if is_message_delivered:
                         new_conversation_html_io.write(
-                            '\n'.join((
-                                '    <div>'
-                                f'        [✅ Доставлено]'
-                                '    </div>'
-                            ))
+                            '[✅ Доставлено]'
                         )
                     else:
                         new_conversation_html_io.write(
-                            '\n'.join((
-                                '    <div>'
-                                f'        [⌛ Ожидание доставки...]'
-                                '    </div>'
-                            ))
+                            '[⌛ Ожидание доставки...]',
                         )
                 else:
                     new_conversation_html_io.write(
-                        '\n'.join((
-                            '    <div>'
-                            f'        [Собеседник]'
-                            '    </div>'
-                        ))
+                        f'[Собеседник]'
                     )
 
                 conversation_message_text = (
@@ -2681,11 +2663,7 @@ class MainWindow(QMainWindow):
                 )
 
                 new_conversation_html_io.write(
-                    '\n'.join((
-                        '    <div>'
-                        f'        {conversation_message_text}'
-                        '    </div>'
-                    ))
+                    f': {conversation_message_text}'
                 )
 
             new_conversation_html_io.write(
@@ -2698,6 +2676,11 @@ class MainWindow(QMainWindow):
 
         new_conversation_html = (
             new_conversation_html_io.read().strip()
+        )
+
+        print(
+            f'new_conversation_html'
+            f': {new_conversation_html!r}'
         )
 
         old_conversation_html = (
