@@ -43,6 +43,9 @@ from utils.qt import (
     QtUtils
 )
 
+from utils.time import (
+    get_aware_current_timestamp_ms
+)
 
 _CONFIG_FILE_NAME = (
     os.getenv(
@@ -180,8 +183,12 @@ class MainWindow(QMainWindow):
         '__local_i2p_node_sam_session_status_raw',
         '__local_i2p_node_sam_session_status_value_label',
         '__local_i2p_node_sam_session_update_lock',
+        '__last_remote_i2p_node_ping_timestamp_ms',
         '__remote_i2p_node_address_line_edit',
-        '__remote_i2p_node_address_raw'
+        '__remote_i2p_node_address_raw',
+        '__remote_i2p_node_status_key_label',
+        '__remote_i2p_node_status_raw',
+        '__remote_i2p_node_status_value_label'
     )
 
     def __init__(self):
@@ -516,6 +523,34 @@ class MainWindow(QMainWindow):
             )
         )
 
+        remote_i2p_node_status_key_label = (
+            QtUtils.create_label(
+                alignment=(
+                    Qt.AlignmentFlag.AlignLeft
+                ),
+
+                label_text=(
+                    'Статус удалённого узла'
+                )
+            )
+        )
+
+        remote_i2p_node_status_raw = (
+            'Оффлайн'
+        )
+
+        remote_i2p_node_status_value_label = (
+            QtUtils.create_label(
+                alignment=(
+                    Qt.AlignmentFlag.AlignLeft
+                ),
+
+                label_text=(
+                    remote_i2p_node_status_raw
+                )
+            )
+        )
+
         info_layout.addWidget(
             local_i2p_node_address_key_label,
             0, 0, 1, 1
@@ -554,6 +589,16 @@ class MainWindow(QMainWindow):
         info_layout.addWidget(
             local_i2p_node_sam_session_outgoing_data_connection_status_value_label,
             3, 1, 1, 1
+        )
+
+        info_layout.addWidget(
+            remote_i2p_node_status_key_label,
+            4, 0, 1, 1
+        )
+
+        info_layout.addWidget(
+            remote_i2p_node_status_value_label,
+            4, 1, 1, 1
         )
 
         window_layout.addLayout(
@@ -729,6 +774,10 @@ class MainWindow(QMainWindow):
             asyncio.Lock()
         )
 
+        self.__last_remote_i2p_node_ping_timestamp_ms = (
+            None
+        )
+
         self.__remote_i2p_node_address_line_edit = (
             remote_i2p_node_address_line_edit
         )
@@ -739,11 +788,17 @@ class MainWindow(QMainWindow):
             ]
         ) = None
 
-        self.__remote_i2p_node_port: (
-            typing.Optional[
-                int
-            ]
-        ) = None
+        self.__remote_i2p_node_status_key_label = (
+            remote_i2p_node_status_key_label
+        )
+
+        self.__remote_i2p_node_status_raw = (
+            remote_i2p_node_status_raw
+        )
+
+        self.__remote_i2p_node_status_value_label = (
+            remote_i2p_node_status_value_label
+        )
 
         asyncio.create_task(
             self.__on_local_i2p_node_sam_ip_address_line_edit_text_changed_ex()
@@ -1087,6 +1142,33 @@ class MainWindow(QMainWindow):
                     BrokenPipeError
                 )
 
+            message_type: (
+                typing.Optional[
+                    str
+                ]
+            ) = (
+                raw_data.get(
+                    'message_type'
+                )
+            )
+
+            if message_type is None:
+                print(
+                    '[WARNING]'
+                    ': Unsupported message type inside raw data'
+                    f': {raw_data}'
+                )
+
+                continue
+
+            if (
+                    message_type ==
+                    'ping'
+            ):
+                self.__last_remote_i2p_node_ping_timestamp_ms = (
+                    get_aware_current_timestamp_ms()
+                )
+
     @staticmethod
     async def __start_local_i2p_node_sam_session_data_connection_pinging_loop(
             connection: (
@@ -1348,6 +1430,59 @@ class MainWindow(QMainWindow):
                 )
 
                 continue
+
+    async def start_remote_i2p_node_status_update_loop(
+            self
+    ) -> None:
+        while True:
+            last_remote_i2p_node_ping_timestamp_ms = (
+                self.__last_remote_i2p_node_ping_timestamp_ms
+            )
+
+            new_remote_i2p_node_status_raw: str
+
+            if last_remote_i2p_node_ping_timestamp_ms is not None:
+                current_timestamp_ms = (
+                    get_aware_current_timestamp_ms()
+                )
+
+                delta_time_ms = (
+                    current_timestamp_ms -
+                    last_remote_i2p_node_ping_timestamp_ms
+                )
+
+                if (
+                        delta_time_ms <
+                        1000  # ms
+                ):
+                    new_remote_i2p_node_status_raw = (
+                        f'Онлайн ({delta_time_ms} мс)'
+                    )
+                else:
+                    delta_time_seconds = (
+                        delta_time_ms //
+                        1000  # ms
+                    )
+
+                    new_remote_i2p_node_status_raw = (
+                        f'Онлайн ({delta_time_seconds} с)'
+                    )
+            else:
+                new_remote_i2p_node_status_raw = (
+                    'Оффлайн'
+                )
+
+            await (
+                self.__update_remote_i2p_node_status(
+                    new_remote_i2p_node_status_raw
+                )
+            )
+
+            await (
+                asyncio.sleep(
+                    1.0  # s
+                )
+            )
 
     async def update_local_i2p_node_destination(
             self
@@ -2085,6 +2220,42 @@ class MainWindow(QMainWindow):
             new_local_i2p_node_sam_session_status_raw
         )
 
+    async def __update_remote_i2p_node_status(
+            self,
+
+            new_remote_i2p_node_status_raw: str
+    ) -> None:
+        remote_i2p_node_status_value_label = (
+            self.__remote_i2p_node_status_value_label
+        )
+
+        old_remote_i2p_node_status_raw = (
+            remote_i2p_node_status_value_label.text().strip()
+        )
+
+        if (
+                old_remote_i2p_node_status_raw is not None and
+
+                (
+                    new_remote_i2p_node_status_raw ==
+                    old_remote_i2p_node_status_raw
+                )
+        ):
+            return
+
+        remote_i2p_node_status_value_label.setText(
+            new_remote_i2p_node_status_raw
+        )
+
+        print(
+            'New remote I2P node status'
+            f': {new_remote_i2p_node_status_raw!r}'
+        )
+
+        self.__remote_i2p_node_status_raw = (
+            new_remote_i2p_node_status_raw
+        )
+
 
 async def run_application(
         application: (
@@ -2121,6 +2292,7 @@ async def run_application(
             # window.start_local_i2p_node_sam_session_control_connection_creation_loop(),
             window.start_local_i2p_node_sam_session_incoming_data_connection_creation_loop(),
             window.start_local_i2p_node_sam_session_outgoing_data_connection_creation_loop(),
+            window.start_remote_i2p_node_status_update_loop(),
             application_close_event.wait()
         )
     )
