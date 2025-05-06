@@ -166,8 +166,8 @@ class _Connection(object):
         )
 
         logger.info(
-            'Sent raw data:',
-            raw_data
+            'Sent raw data'
+            f': {raw_data}'
         )
 
         return True
