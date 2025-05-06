@@ -1458,8 +1458,9 @@ class MainWindow(QMainWindow):
                     str
                 ]
             ) = (
-                raw_data.get(
-                    'type'
+                raw_data.pop(
+                    'type',
+                    None
                 )
             )
 
@@ -1650,7 +1651,7 @@ class MainWindow(QMainWindow):
 
                 if message_raw_data:
                     logger.warning(
-                        ': Message raw data has extra fields'
+                        'Message raw data has extra fields'
                         f': {message_raw_data}'
                     )
 
