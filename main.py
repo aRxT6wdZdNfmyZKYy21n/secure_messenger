@@ -72,6 +72,36 @@ _CONFIG_FILE_PATH = (
     _CONFIG_FILE_NAME
 )
 
+_IS_DEBUG_RAW = (
+    os.getenv(
+        'IS_DEBUG',
+        'false'
+    )
+)
+
+_IS_DEBUG: bool
+
+if (
+        _IS_DEBUG_RAW ==
+        'true'
+):
+    _IS_DEBUG = (
+        True
+    )
+elif (
+        _IS_DEBUG_RAW ==
+        'false'
+):
+    _IS_DEBUG = (
+        False
+    )
+else:
+    raise (
+        ValueError(
+            _IS_DEBUG_RAW
+        )
+    )
+
 
 logger = (
     logging.getLogger(
@@ -3030,6 +3060,31 @@ async def run_application(
 
 
 def main() -> None:
+    logging_handlers = [
+        _CustomStreamHandler()
+    ]
+
+    logging_level: str
+
+    if _IS_DEBUG:
+        logging_handlers.append(
+            logging.FileHandler(
+                f'log.log',
+
+                encoding=(
+                    'utf-8'
+                )
+            )
+        )
+
+        logging_level = (
+            logging.DEBUG
+        )
+    else:
+        logging_level = (
+            logging.INFO
+        )
+
     logging.basicConfig(
         encoding=(
             'utf-8'
@@ -3042,20 +3097,12 @@ def main() -> None:
             ': %(message)s'
         ),
 
-        handlers=[
-            logging.FileHandler(
-                f'log.log',
-
-                encoding=(
-                    'utf-8'
-                )
-            ),
-
-            _CustomStreamHandler()
-        ],
+        handlers=(
+            logging_handlers
+        ),
 
         level=(
-            logging.DEBUG
+            logging_level
         )
     )
 
