@@ -73,6 +73,13 @@ _CONFIG_FILE_PATH = (
 )
 
 
+logger = (
+    logging.getLogger(
+        __name__
+    )
+)
+
+
 class _Connection(object):
     __slots__ = (
         '__reader',
@@ -134,7 +141,7 @@ class _Connection(object):
             )
         )
 
-        print(
+        logger.info(
             'Received raw_data'
             f': {raw_data}'
         )
@@ -158,12 +165,104 @@ class _Connection(object):
             b'\n'
         )
 
-        print(
+        logger.info(
             'Sent raw data:',
             raw_data
         )
 
         return True
+
+
+class _CustomStreamHandler(logging.StreamHandler):
+    __slots__ = (
+        '__stderr_stream_handler',
+        '__stdout_stream_handler'
+    )
+
+    terminator = '\n'
+
+    def __init__(
+            self
+    ):
+        super(
+            _CustomStreamHandler,
+            self
+        ).__init__()
+
+        self.__stderr_stream_handler = (
+            logging.StreamHandler(
+                stream=(
+                    sys.stderr
+                )
+            )
+        )
+
+        self.__stdout_stream_handler = (
+            logging.StreamHandler(
+                stream=(
+                    sys.stdout
+                )
+            )
+        )
+
+    def flush(
+            self
+    ) -> None:
+        self.acquire()
+
+        try:
+            self.__stderr_stream_handler.flush()
+            self.__stdout_stream_handler.flush()
+        finally:
+            self.release()
+
+    def emit(
+            self,
+
+            record: (
+                logging.LogRecord
+            )
+    ):
+        level_number = (
+            record.levelno
+        )
+
+        stream_handler: (
+            logging.StreamHandler
+        )
+
+        if (
+                level_number >=
+                logging.WARNING
+        ):
+            stream_handler = (
+                self.__stderr_stream_handler
+            )
+        else:
+            stream_handler = (
+                self.__stdout_stream_handler
+            )
+
+        stream_handler.emit(
+            record
+        )
+
+    def setStream(
+            self,
+
+            stream
+    ):
+        raise (
+            NotImplementedError
+        )
+
+    def __repr__(
+            self
+    ) -> str:
+        return (
+            f'[{self.__class__.__name__}]'
+        )
+
 
 class MainWindow(QMainWindow):
     __slots__ = (
@@ -1073,7 +1172,7 @@ class MainWindow(QMainWindow):
                 f'{remote_i2p_node_destination.base32}.b32.i2p'
             )
 
-            print(
+            logger.info(
                 'New client'
                 f' with remote I2P Node address {remote_i2p_node_address_raw!r}'
                 ' was connected!'
@@ -1365,8 +1464,7 @@ class MainWindow(QMainWindow):
             )
 
             if raw_data_type is None:
-                print(
-                    '[WARNING]'
+                logger.warning(
                     ': Raw data without type'
                     f': {raw_data}'
                 )
@@ -1393,8 +1491,7 @@ class MainWindow(QMainWindow):
                 )
 
                 if message_id is None:
-                    print(
-                        '[WARNING]'
+                    logger.warning(
                         ': ACK raw data without message ID field'
                         f': {ack_raw_data}'
                     )
@@ -1407,8 +1504,7 @@ class MainWindow(QMainWindow):
 
                         int
                 ):
-                    print(
-                        '[WARNING]'
+                    logger.warning(
                         ': ACK raw data have incorrect message ID field type'
                         f': {ack_raw_data}'
                     )
@@ -1450,8 +1546,7 @@ class MainWindow(QMainWindow):
                 )
 
                 if message_id is None:
-                    print(
-                        '[WARNING]'
+                    logger.warning(
                         ': Message raw data without ID field'
                         f': {message_raw_data}'
                     )
@@ -1464,8 +1559,7 @@ class MainWindow(QMainWindow):
 
                         int
                 ):
-                    print(
-                        '[WARNING]'
+                    logger.warning(
                         ': Message raw data have incorrect ID field type'
                         f': {message_raw_data}'
                     )
@@ -1504,8 +1598,7 @@ class MainWindow(QMainWindow):
                 )
 
                 if message_text is None:
-                    print(
-                        '[WARNING]'
+                    logger.warning(
                         ': Message raw data without text field'
                         f': {message_raw_data}'
                     )
@@ -1516,8 +1609,7 @@ class MainWindow(QMainWindow):
 
                         str
                 ):
-                    print(
-                        '[WARNING]'
+                    logger.warning(
                         ': Message raw data have incorrect text field type'
                         f': {message_raw_data}'
                     )
@@ -1537,8 +1629,7 @@ class MainWindow(QMainWindow):
                 )
 
                 if message_timestamp_ms is None:
-                    print(
-                        '[WARNING]'
+                    logger.warning(
                         ': Message raw data without timestamp (ms) field'
                         f': {message_raw_data}'
                     )
@@ -1549,8 +1640,7 @@ class MainWindow(QMainWindow):
 
                         int
                 ):
-                    print(
-                        '[WARNING]'
+                    logger.warning(
                         ': Message raw data have incorrect timestamp (ms) field type'
                         f': {message_raw_data}'
                     )
@@ -1559,8 +1649,7 @@ class MainWindow(QMainWindow):
                 # TODO: check message_timestamp_ms > 0
 
                 if message_raw_data:
-                    print(
-                        '[WARNING]'
+                    logger.warning(
                         ': Message raw data has extra fields'
                         f': {message_raw_data}'
                     )
@@ -1579,9 +1668,7 @@ class MainWindow(QMainWindow):
                     remote_i2p_node_message_raw_data_by_id_map[
                         message_id
                     ]
-                ) = (
-                    message_raw_data
-                )
+                ) = message_raw_data
 
                 self.__update_conversation()
 
@@ -1777,7 +1864,7 @@ class MainWindow(QMainWindow):
                 )
             )
 
-            print(
+            logger.info(
                 'Successfully connected to client'
                 f' with remote I2P Node address {remote_i2p_node_address_raw!r}'
             )
@@ -2111,7 +2198,7 @@ class MainWindow(QMainWindow):
                 )
             )
         except ValueError:
-            print(
+            logger.info(
                 f'Could not parse IP address {new_local_i2p_node_sam_ip_address_raw!r}'
             )
 
@@ -2214,7 +2301,7 @@ class MainWindow(QMainWindow):
                         None
                     )
             except ValueError:
-                print(
+                logger.info(
                     f'Could not parse port {new_local_i2p_node_sam_port_raw!r}'
                 )
 
@@ -2833,7 +2920,7 @@ class MainWindow(QMainWindow):
             new_local_i2p_node_sam_session_incoming_data_connection_status_raw
         )
 
-        print(
+        logger.info(
             'New incoming data connection status'
             f': {new_local_i2p_node_sam_session_incoming_data_connection_status_raw!r}'
         )
@@ -2869,7 +2956,7 @@ class MainWindow(QMainWindow):
             new_local_i2p_node_sam_session_outgoing_data_connection_status_raw
         )
 
-        print(
+        logger.info(
             'New outgoing data connection status'
             f': {new_local_i2p_node_sam_session_outgoing_data_connection_status_raw!r}'
         )
@@ -2905,7 +2992,7 @@ class MainWindow(QMainWindow):
             new_local_i2p_node_sam_session_status_raw
         )
 
-        print(
+        logger.info(
             'New session status'
             f': {new_local_i2p_node_sam_session_status_raw!r}'
         )
@@ -2941,7 +3028,7 @@ class MainWindow(QMainWindow):
             new_remote_i2p_node_status_raw
         )
 
-        print(
+        logger.info(
             'New remote I2P node status'
             f': {new_remote_i2p_node_status_raw!r}'
         )
@@ -2994,6 +3081,29 @@ async def run_application(
 
 def main() -> None:
     logging.basicConfig(
+        encoding=(
+            'utf-8'
+        ),
+
+        format=(
+            '[%(levelname)s]'
+            '[%(asctime)s]'
+            '[%(name)s]'
+            ': %(message)s'
+        ),
+
+        handlers=[
+            logging.FileHandler(
+                f'log.log',
+
+                encoding=(
+                    'utf-8'
+                )
+            ),
+
+            _CustomStreamHandler()
+        ],
+
         level=(
             logging.DEBUG
         )
