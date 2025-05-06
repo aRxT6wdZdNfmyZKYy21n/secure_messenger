@@ -2678,11 +2678,6 @@ class MainWindow(QMainWindow):
             new_conversation_html_io.read().strip()
         )
 
-        print(
-            f'new_conversation_html'
-            f': {new_conversation_html!r}'
-        )
-
         old_conversation_html = (
             conversation_text_edit.toHtml().strip()
         )
