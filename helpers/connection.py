@@ -13,6 +13,11 @@ logger = (
 )
 
 
+_DEFAULT_TIMEOUT = (
+    15.0  # s
+)
+
+
 class Connection(object):
     __slots__ = (
         '__reader',
@@ -49,33 +54,32 @@ class Connection(object):
         self.__writer.close()
 
     async def read_raw_data(
-            self
+            self,
+
+            timeout = (
+                _DEFAULT_TIMEOUT
+            )
     ) -> (
             typing.Optional[
                 typing.Dict
             ]
     ):
-        reader = (
-            self.__reader
-        )
-
         line_bytes_count_bytes = (
             await (
-                reader.readexactly(
-                    4
+                self.__read_exactly(
+                    bytes_count=(
+                        4
+                    ),
+
+                    timeout=(
+                        timeout
+                    )
                 )
             )
         )
 
-        assert (
-            len(
-                line_bytes_count_bytes
-            ) ==
-
-            4
-        ), (
-            line_bytes_count_bytes
-        )
+        if line_bytes_count_bytes is None:
+            return None
 
         line_bytes_count = (
             struct.unpack(
@@ -86,27 +90,26 @@ class Connection(object):
             ]
         )
 
-        print(
+        logger.info(
             f'Reading {line_bytes_count} bytes...'
         )
 
         line_bytes = (
             await (
-                self.__reader.readexactly(
-                    line_bytes_count
+                self.__read_exactly(
+                    bytes_count=(
+                        line_bytes_count
+                    ),
+
+                    timeout=(
+                        timeout
+                    )
                 )
             )
         )
 
-        assert (
-            len(
-                line_bytes
-            ) ==
-
-            line_bytes_count
-        ), (
-            line_bytes
-        )
+        if line_bytes is None:
+            return None
 
         line = (
             line_bytes.rstrip().decode()
@@ -248,4 +251,62 @@ class Connection(object):
 
         return (
             data
+        )
+
+    async def __read_exactly(
+            self,
+
+            bytes_count: int,
+
+            timeout = (
+                _DEFAULT_TIMEOUT
+            )
+    ) -> (
+            typing.Optional[
+                bytes
+            ]
+    ):
+        reader = (
+            self.__reader
+        )
+
+        try:
+            data_bytes = (
+                await (
+                    asyncio.wait_for(
+                        reader.readexactly(
+                            bytes_count
+                        ),
+
+                        timeout=(
+                            timeout
+                        )
+                    )
+                )
+            )
+        except asyncio.exceptions.IncompleteReadError:
+            logger.warning(
+                'IncompleteReadError'
+            )
+
+            return None
+        except asyncio.TimeoutError:
+            logger.warning(
+                'Timeout'
+            )
+
+            return None
+
+        assert (
+            len(
+                data_bytes
+            ) ==
+
+            data_bytes
+        ), (
+            data_bytes
+        )
+
+        return (
+            data_bytes
         )
