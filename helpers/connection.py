@@ -302,7 +302,7 @@ class Connection(object):
                 data_bytes
             ) ==
 
-            data_bytes
+            bytes_count
         ), (
             data_bytes
         )
