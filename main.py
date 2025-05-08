@@ -3,10 +3,9 @@ import codecs
 import io
 import logging
 import os
-import uuid
-
 import sys
 import typing
+import uuid
 
 from collections import (
     defaultdict
@@ -28,11 +27,13 @@ import orjson
 
 from PyQt6.QtCore import (
 # from PySide6.QtCore import (
+    QMimeData,
     Qt
 )
 
 from PyQt6.QtGui import (
-    QFontDatabase
+    QFontDatabase,
+    QImage
 )
 
 from PyQt6.QtWidgets import (
@@ -123,6 +124,132 @@ logger = (
     )
 )
 
+
+class _MessageTextEdit(QTextEdit):
+    __slots__ = (
+        '__images',
+    )
+
+    def __init__(
+            self
+    ) -> None:
+        super(
+            _MessageTextEdit,
+            self
+        ).__init__()
+
+        self.__images: (
+            typing.List[
+                QImage
+            ]
+        ) = []
+
+    def clear(self) -> None:
+        super(
+            _MessageTextEdit,
+            self
+        ).clear()
+
+        self.__images.clear()
+
+    def images(
+            self
+    ) -> (
+            typing.List[
+                QImage
+            ]
+    ):
+        return (
+            self.__images
+        )
+
+    def insertFromMimeData(
+            self,
+
+            source: (
+                QMimeData
+            )
+    ) -> None:
+        if (
+                source.hasImage()
+        ):
+            image: (
+                QImage
+            ) = source.imageData()
+
+            self.__images.append(
+                image
+            )
+
+            self.insertHtml(
+                '<br />' '\n'
+                '<div>' +
+
+                QtUtils.get_image_html_text(
+                    QtUtils.get_image_base64_encoded_text(
+                        image
+                    )
+                ) +
+
+                '</div>' '\n'
+                '<br />' '\n'
+            )
+        elif (
+                source.hasText()
+        ):
+            self.insertPlainText(
+                source.text()
+            )
+        else:
+            print(
+                'hasColor'
+                f': {source.hasColor()!r}'
+            )
+
+            print(
+                'colorData'
+                f': {source.colorData()!r}'
+            )
+
+            print(
+                'hasHtml'
+                f': {source.hasHtml()!r}'
+            )
+
+            print(
+                'html'
+                f': {source.html()!r}'
+            )
+
+            print(
+                'hasImage'
+                f': {source.hasImage()!r}'
+            )
+
+            print(
+                'imageData'
+                f': {source.imageData()!r}'
+            )
+
+            print(
+                'hasText'
+                f': {source.hasText()!r}'
+            )
+
+            print(
+                'text'
+                f': {source.text()!r}'
+            )
+
+            print(
+                'hasUrls'
+                f': {source.hasUrls()!r}'
+            )
+
+            print(
+                'urls'
+                f': {source.urls()!r}'
+            )
 
 class MainWindow(QMainWindow):
     __slots__ = (
@@ -636,7 +763,7 @@ class MainWindow(QMainWindow):
         )
 
         message_text_edit = (
-            QTextEdit()
+            _MessageTextEdit()
         )
 
         message_text_edit.setPlaceholderText(
@@ -730,7 +857,7 @@ class MainWindow(QMainWindow):
             ]
         ) = {}
 
-        self.__local_i2p_node_pending_message_raw_data_by_id_map: (
+        self.__local_i2p_node_pending_message_raw_data_by_id_map: (  # TODO: __local_i2p_node_pending_message_id_set
             typing.Dict[
                 int,
                 typing.Dict
@@ -1471,6 +1598,85 @@ class MainWindow(QMainWindow):
                 ):
                     continue
 
+                message_image_base64_encoded_text_list: (
+                    typing.Optional[
+                        typing.List[
+                            str
+                        ]
+                    ]
+                ) = (
+                    message_raw_data.pop(
+                        'image_base64_encoded_text_list',
+                        None
+                    )
+                )
+
+                if message_image_base64_encoded_text_list is not None:
+                    if (
+                            type(
+                                message_image_base64_encoded_text_list
+                            ) is not
+
+                            list
+                    ):
+                        logger.warning(
+                            ': Message raw data has incorrect image base64 encoded text list field type'
+                            f': {message_image_base64_encoded_text_list}'
+                        )
+
+                        continue
+                    elif (
+                            not (
+                                message_image_base64_encoded_text_list
+                            )
+                    ):
+                        message_image_base64_encoded_text_list = (
+                            None
+                        )
+                    else:
+                        is_message_image_base64_encoded_text_list_valid = (
+                            True
+                        )
+
+                        for message_image_base64_encoded_text in (
+                                message_image_base64_encoded_text_list
+                        ):
+                            if (
+                                    type(
+                                        message_image_base64_encoded_text
+                                    ) is not
+
+                                    str
+                            ):
+                                logger.warning(
+                                    ': Message raw data has incorrect image base64 encoded text field type'
+                                    f': {message_image_base64_encoded_text}'
+                                )
+
+                                is_message_image_base64_encoded_text_list_valid = (
+                                    False
+                                )
+
+                                break
+                            elif (
+                                    not (
+                                            message_image_base64_encoded_text
+                                    )
+                            ):
+                                logger.warning(
+                                    ': Message raw data has empty image base64 encoded text'
+                                    f': {message_image_base64_encoded_text_list}'
+                                )
+
+                                is_message_image_base64_encoded_text_list_valid = (
+                                    False
+                                )
+
+                                break
+
+                        if not is_message_image_base64_encoded_text_list_valid:
+                            continue
+
                 message_text: (
                     typing.Optional[
                         str
@@ -1482,25 +1688,38 @@ class MainWindow(QMainWindow):
                     )
                 )
 
-                if message_text is None:
-                    logger.warning(
-                        ': Message raw data without text field'
-                        f': {message_raw_data}'
-                    )
-                elif (
-                        type(
-                            message_text
-                        ) is not
+                if message_text is not None:
+                    if (
+                            type(
+                                message_text
+                            ) is not
 
-                        str
+                            str
+                    ):
+                        logger.warning(
+                            ': Message raw data has incorrect text field type'
+                            f': {message_text}'
+                        )
+
+                        continue
+                    elif (
+                            not (
+                                message_text
+                            )
+                    ):
+                        message_text = (
+                            None
+                        )
+
+                if not (
+                        message_text is not None or
+                        message_image_base64_encoded_text_list is not None
                 ):
                     logger.warning(
-                        ': Message raw data have incorrect text field type'
-                        f': {message_raw_data}'
+                        ': Message raw data has no content'
                     )
 
                     continue
-                # TODO: check text is not empty (for MVP)
 
                 if message_raw_data:
                     logger.warning(
@@ -1509,14 +1728,24 @@ class MainWindow(QMainWindow):
                     )
 
                 message_raw_data = {
-                    'text': (
-                        message_text
-                    ),
-
                     'timestamp_ms': (
                         get_aware_current_timestamp_ms()
                     )
                 }
+
+                if message_text is not None:
+                    (
+                        message_raw_data[
+                            'text'
+                        ]
+                    ) = message_text
+
+                if message_image_base64_encoded_text_list is not None:
+                    (
+                        message_raw_data[
+                            'image_base64_encoded_text_list'
+                        ]
+                    ) = message_image_base64_encoded_text_list
 
                 (
                     remote_i2p_node_message_raw_data_by_id_map[
@@ -2202,8 +2431,38 @@ class MainWindow(QMainWindow):
             message_text_edit.toPlainText().strip()
         )
 
-        if not message_text:
+        message_images = (
+            message_text_edit.images()
+        )
+
+        if not (
+                message_text or
+                message_images
+        ):
             return
+
+        message_image_base64_encoded_text_list: (
+            typing.Optional[
+                typing.List[
+                    str
+                ]
+            ]
+        )
+
+        if message_images:
+            message_image_base64_encoded_text_list = [
+                QtUtils.get_image_base64_encoded_text(
+                    message_image
+                )
+
+                for message_image in (
+                    message_images
+                )
+            ]
+        else:
+            message_image_base64_encoded_text_list = (
+                None
+            )
 
         local_i2p_node_message_raw_data_by_id_map = (
             self.__local_i2p_node_message_raw_data_by_id_map
@@ -2222,29 +2481,43 @@ class MainWindow(QMainWindow):
         else:
             message_id = 0
 
+        pending_message_raw_data = {}
+
+        if message_text:
+            (
+                pending_message_raw_data[
+                    'text'
+                ]
+            ) = message_text
+
+        if message_image_base64_encoded_text_list is not None:
+            (
+                pending_message_raw_data[
+                    'image_base64_encoded_text_list'
+                ]
+            ) = message_image_base64_encoded_text_list
+
+        message_raw_data = (
+            pending_message_raw_data.copy()
+        )
+
+        (
+            message_raw_data[
+                'timestamp_ms'
+            ]
+        ) = get_aware_current_timestamp_ms()
+
         (
             local_i2p_node_message_raw_data_by_id_map[
                 message_id
             ]
-        ) = {
-            'text': (
-                message_text
-            ),
+        ) = message_raw_data
 
-            'timestamp_ms': (
-                get_aware_current_timestamp_ms()
-            )
-        }
-
-        pending_message_raw_data = (
+        (
             self.__local_i2p_node_pending_message_raw_data_by_id_map[
                 message_id
             ]
-        ) = {
-            'text': (
-                message_text
-            )
-        }
+        ) = pending_message_raw_data
 
         self.__update_conversation()
 
@@ -2262,9 +2535,7 @@ class MainWindow(QMainWindow):
 
                     break
 
-        message_text_edit.setText(
-            ''
-        )
+        message_text_edit.clear()
 
         # TODO: update message sending button active flag
 
@@ -2518,7 +2789,8 @@ class MainWindow(QMainWindow):
                     new_conversation_html_io.write(
                         '\n'.join((
                             f'            <div id="message_{message_idx}">',
-                            f'                - [{message_time}]'
+                            '                <div>',
+                            f'                    - [{message_time}]'
                         ))
                     )
 
@@ -2545,24 +2817,76 @@ class MainWindow(QMainWindow):
                             )
                         else:
                             new_conversation_html_io.write(
-                                '[<font face="Noto Color Emoji">⌛</font> <i>Ожидание доставки...</i>]',
+                                '[⌛ <i>Ожидание доставки...</i>]',
                             )
                     else:
                         new_conversation_html_io.write(
                             f'[Собеседник]'
                         )
 
-                    conversation_message_text = (
-                        conversation_message_raw_data[
-                            'text'
-                        ]
+                    new_conversation_html_io.write(
+                        ': '
                     )
 
+                    conversation_message_text = (
+                        conversation_message_raw_data.get(
+                            'text'
+                        )
+                    )
+
+                    if conversation_message_text is not None:
+                        new_conversation_html_io.write(
+                            conversation_message_text +
+                            '\n'
+                        )
+
                     new_conversation_html_io.write(
-                        '\n'.join((
-                            f': {conversation_message_text}',
-                            '            </div>'
-                        ))
+                        '                </div>'
+                    )
+
+                    conversation_message_image_base64_encoded_text_list: (
+                        typing.Optional[
+                            typing.List[
+                                str
+                            ]
+                        ]
+                    ) = (
+                        conversation_message_raw_data.get(
+                            'image_base64_encoded_text_list'
+                        )
+                    )
+
+                    if conversation_message_image_base64_encoded_text_list is not None:
+                        new_conversation_html_io.write(
+                            '                <div>'
+                        )
+
+                        for conversation_message_image_idx, conversation_message_image_base64_encoded_text in (
+                                enumerate(
+                                    conversation_message_image_base64_encoded_text_list
+                                )
+                        ):
+                            if conversation_message_image_idx:
+                                new_conversation_html_io.write(
+                                    '\n'
+                                )
+
+                            new_conversation_html_io.write(
+                                f'                    <div id="message_{message_idx}_image_{conversation_message_image_idx}">' +
+
+                                QtUtils.get_image_html_text(
+                                    conversation_message_image_base64_encoded_text
+                                ) +
+
+                                '                    </div>'
+                            )
+
+                        new_conversation_html_io.write(
+                            '                </div>'
+                        )
+
+                    new_conversation_html_io.write(
+                        '            </div>'
                     )
 
         new_conversation_html_io.write(
