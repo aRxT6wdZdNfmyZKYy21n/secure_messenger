@@ -602,10 +602,6 @@ class MainWindow(QMainWindow):
             'Could not load emoji font'
         )
 
-        print(
-            QFontDatabase.families()
-        )
-
         QFontDatabase.addApplicationEmojiFontFamily(
             # 'NotoColorEmoji-Regular'
             'Noto Color Emoji'
@@ -2361,9 +2357,13 @@ class MainWindow(QMainWindow):
     def __update_conversation(
             self
     ) -> None:
-        conversation_message_raw_data_list_by_timestamp_ms_map = (
+        conversation_message_raw_data_list_by_time_map_by_date_map = (
             defaultdict(
-                list
+                lambda: (
+                    defaultdict(
+                        list
+                    )
+                )
             )
         )
 
@@ -2421,9 +2421,32 @@ class MainWindow(QMainWindow):
                     ]
                 )
 
+                message_datetime = (
+                    datetime.fromtimestamp(
+                        (
+                            timestamp_ms //
+                            1000  # ms
+                        ),
+
+                        tz=(
+                            timezone.utc
+                        )
+                    ).astimezone()
+                )
+
+                message_date = (
+                    message_datetime.date()
+                )
+
+                message_time = (
+                    message_datetime.time()
+                )
+
                 conversation_message_raw_data_list = (
-                    conversation_message_raw_data_list_by_timestamp_ms_map[
-                        timestamp_ms
+                    conversation_message_raw_data_list_by_time_map_by_date_map[
+                        message_date
+                    ][
+                        message_time
                     ]
                 )
 
@@ -2444,103 +2467,108 @@ class MainWindow(QMainWindow):
                 '<html>',
                 '    <head>',
                 '    </head>',
-                '    <body>'
+                '    <body>',
+                '        <div id="conversation" style="font-size: 14pt;">'
             ))
         )
 
-        for message_idx, timestamp_ms in (
-                enumerate(
-                    sorted(
-                        conversation_message_raw_data_list_by_timestamp_ms_map
-                    )
+        for message_date in (
+                sorted(
+                    conversation_message_raw_data_list_by_time_map_by_date_map
                 )
         ):
-            # if message_idx:
-            #     new_conversation_html_io.write(
-            #         '<br>' '\n'
-            #     )
-
-            new_conversation_html_io.write(
-                f'        <div id="message_{message_idx}" style="font-size: 14pt;">'
-            )
-
-            message_datetime = (
-                datetime.fromtimestamp(
-                    (
-                        timestamp_ms //
-                        1000  # ms
-                    ),
-
-                    tz=(
-                        timezone.utc
-                    )
-                )
-            )
-
-            new_conversation_html_io.write(
-                f'[{message_datetime.astimezone().isoformat()}]',  # TODO
-            )
-
-            conversation_message_raw_data_list = (
-                conversation_message_raw_data_list_by_timestamp_ms_map.get(
-                    timestamp_ms
+            conversation_message_raw_data_list_by_time_map = (
+                conversation_message_raw_data_list_by_time_map_by_date_map.get(
+                    message_date
                 )
             )
 
             assert (
-                conversation_message_raw_data_list is not None
+                conversation_message_raw_data_list_by_time_map is not None
             ), None
 
-            for conversation_message_raw_data in (
-                    conversation_message_raw_data_list
+            new_conversation_html_io.write(
+                '\n'.join((
+                    f'            <div>',
+                    f'                [{message_date}]',
+                    f'            </div>'
+                ))
+            )
+
+            for message_time in (
+                    sorted(
+                        conversation_message_raw_data_list_by_time_map
+                    )
             ):
-                is_own_message: bool = (
-                    conversation_message_raw_data[
-                        'is_own'
-                    ]
+                conversation_message_raw_data_list = (
+                    conversation_message_raw_data_list_by_time_map.get(
+                        message_time
+                    )
                 )
 
-                if is_own_message:
+                assert (
+                    conversation_message_raw_data_list is not None
+                ), None
+
+                for message_idx, conversation_message_raw_data in (
+                        enumerate(
+                            conversation_message_raw_data_list
+                        )
+                ):
                     new_conversation_html_io.write(
-                        f'[Вы]'
+                        '\n'.join((
+                            f'            <div id="message_{message_idx}">',
+                            f'                - [{message_time}]'
+                        ))
                     )
 
-                    is_message_delivered: bool = (
+                    is_own_message: bool = (
                         conversation_message_raw_data[
-                            'is_delivered'
+                            'is_own'
                         ]
                     )
 
-                    if is_message_delivered:
+                    if is_own_message:
                         new_conversation_html_io.write(
-                            '[✅ Доставлено]'
+                            f'[Вы]'
                         )
+
+                        is_message_delivered: bool = (
+                            conversation_message_raw_data[
+                                'is_delivered'
+                            ]
+                        )
+
+                        if is_message_delivered:
+                            new_conversation_html_io.write(
+                                '[✅ Доставлено]'
+                            )
+                        else:
+                            new_conversation_html_io.write(
+                                '[<font face="Noto Color Emoji">⌛</font> <i>Ожидание доставки...</i>]',
+                            )
                     else:
                         new_conversation_html_io.write(
-                            '[<font face="Noto Color Emoji">⌛</font> <i>Ожидание доставки...</i>]',
+                            f'[Собеседник]'
                         )
-                else:
-                    new_conversation_html_io.write(
-                        f'[Собеседник]'
+
+                    conversation_message_text = (
+                        conversation_message_raw_data[
+                            'text'
+                        ]
                     )
 
-                conversation_message_text = (
-                    conversation_message_raw_data[
-                        'text'
-                    ]
-                )
-
-                new_conversation_html_io.write(
-                    f': {conversation_message_text}'
-                )
-
-            new_conversation_html_io.write(
-                '        </div>'
-            )
+                    new_conversation_html_io.write(
+                        '\n'.join((
+                            f': {conversation_message_text}',
+                            '            </div>'
+                        ))
+                    )
 
         new_conversation_html_io.write(
             '\n'.join((
-                '</body>',
+                '        </div>',
+                '    </body>',
                 '</html>'
             ))
         )
