@@ -37,12 +37,13 @@ from PyQt6.QtGui import (
 )
 
 from PyQt6.QtWidgets import (
-# from PySide6.QtWidgets import (
+    # from PySide6.QtWidgets import (
     QApplication,
     QGridLayout,
     QLineEdit,
     QMainWindow,
     QPushButton,
+    QSizePolicy,
     QTextEdit,
     QVBoxLayout,
     QWidget
@@ -125,6 +126,97 @@ logger = (
 )
 
 
+class _ConversationTextEdit(QTextEdit):
+    def createMimeDataFromSelection(
+            self
+    ) -> (
+            QMimeData
+    ):
+        mime_data = (
+            QMimeData()
+        )
+
+        text_cursor = (
+            self.textCursor()
+        )
+
+        if not (
+                text_cursor.hasSelection()
+        ):
+            return (
+                mime_data
+            )
+
+        html_text = (
+            text_cursor.selection().toHtml()
+        )
+
+        result_raw_data = (
+            QtUtils.parse_html(
+                html_text
+            )
+        )
+
+        images: (
+            typing.Optional[
+                typing.List[
+                    QImage
+                ]
+            ]
+        ) = (
+            result_raw_data[
+                'images'
+            ]
+        )
+
+        if images is not None:
+            print(
+                'found images count'
+                f': {len(images)}'
+            )
+
+            if (
+                    len(
+                        images
+                    ) !=
+
+                    1
+            ):
+                logger.warning(
+                    'Could not set more than one image into QMimeData'
+                )
+
+            image = (
+                images[
+                    0
+                ]
+            )
+
+            mime_data.setImageData(
+                image
+            )
+
+        plain_text: str = (
+            result_raw_data[
+                'plain_text'
+            ]
+        )
+
+        if plain_text:
+            print(
+                'plain text'
+                f': {plain_text!r}'
+            )
+
+            mime_data.setText(
+                plain_text
+            )
+
+        return (
+            mime_data
+        )
+
+
 class _MessageTextEdit(QTextEdit):
     __slots__ = (
         '__images',
@@ -138,11 +230,17 @@ class _MessageTextEdit(QTextEdit):
             self
         ).__init__()
 
+        self.document().contentsChanged.connect(  # noqa
+            self.__update_height
+        )
+
         self.__images: (
             typing.List[
                 QImage
             ]
         ) = []
+
+        self.__update_height()
 
     def clear(self) -> None:
         super(
@@ -177,23 +275,100 @@ class _MessageTextEdit(QTextEdit):
                 QImage
             ) = source.imageData()
 
-            self.__images.append(
+            self.__add_image(
                 image
             )
+        elif (
+                source.hasUrls()
+        ):
+            urls = (
+                source.urls()
+            )
 
-            self.insertHtml(
-                '<br />' '\n'
-                '<div>' +
+            for url in (
+                    urls
+            ):
+                if not url.isLocalFile():
+                    logger.warning(
+                        'Non-local file URL is not supported'
+                        f': {url}'
+                    )
 
-                QtUtils.get_image_html_text(
-                    QtUtils.get_image_base64_encoded_text(
+                    continue
+
+                image = (
+                    QImage()
+                )
+
+                if not (
+                        image.load(
+                            url.path()
+                        )
+                ):
+                    logger.warning(
+                        'Could not load image by URL'
+                        f': {url}'
+                    )
+
+                    continue
+
+                self.__add_image(
+                    image
+                )
+        elif (
+                source.hasHtml()
+        ):
+            html_text = (
+                source.html()
+            )
+
+            result_raw_data = (
+                QtUtils.parse_html(
+                    html_text
+                )
+            )
+
+            images: (
+                typing.Optional[
+                    typing.List[
+                        QImage
+                    ]
+                ]
+            ) = (
+                result_raw_data[
+                    'images'
+                ]
+            )
+
+            if images is not None:
+                print(
+                    'found images count'
+                    f': {len(images)}'
+                )
+
+                for image in (
+                        images
+                ):
+                    self.__add_image(
                         image
                     )
-                ) +
 
-                '</div>' '\n'
-                '<br />' '\n'
+            plain_text: str = (
+                result_raw_data[
+                    'plain_text'
+                ]
             )
+
+            if plain_text:
+                print(
+                    'plain text'
+                    f': {plain_text!r}'
+                )
+
+                self.insertPlainText(
+                    plain_text
+                )
+
         elif (
                 source.hasText()
         ):
@@ -250,6 +425,66 @@ class _MessageTextEdit(QTextEdit):
                 'urls'
                 f': {source.urls()!r}'
             )
+
+    def __add_image(
+            self,
+
+            image: (
+                QImage
+            )
+    ) -> None:
+        self.__images.append(
+            image
+        )
+
+        self.insertHtml(
+            QtUtils.get_image_html_text(
+                QtUtils.get_image_base64_encoded_text(
+                    image
+                )
+            )
+        )
+
+        self.insertPlainText(
+            '\n'
+        )
+
+    def __update_height(
+            self
+    ) -> None:
+        new_minimum_height = (
+            min(
+                max(
+                    int(
+                        self.document().size().height()
+                    ),
+
+                    25
+                ),
+
+                500
+            )
+        )
+
+        old_minimum_height = (
+            self.minimumHeight()
+        )
+
+        if (
+                new_minimum_height ==
+                old_minimum_height
+        ):
+            return
+
+        print(
+            'new_minimum_height'
+            f': {new_minimum_height}'
+        )
+
+        self.setMinimumHeight(
+            new_minimum_height
+        )
+
 
 class MainWindow(QMainWindow):
     __slots__ = (
@@ -654,6 +889,10 @@ class MainWindow(QMainWindow):
             )
         )
 
+        remote_i2p_node_status_value_label.setStyleSheet(
+            'color: red'
+        )
+
         info_layout.addWidget(
             local_i2p_node_address_key_label,
             0, 0, 1, 1
@@ -739,7 +978,7 @@ class MainWindow(QMainWindow):
         )
 
         conversation_text_edit = (
-            QTextEdit()
+            _ConversationTextEdit()
         )
 
         conversation_text_edit.setPlaceholderText(
@@ -754,8 +993,14 @@ class MainWindow(QMainWindow):
             QPushButton()
         )
 
+        message_send_button.setSizePolicy(
+            QSizePolicy.Policy.Maximum,
+            QSizePolicy.Policy.Minimum
+        )
+
         message_send_button.setText(
-            'Отправить сообщение'
+            'Отправить\n'
+            'сообщение'
         )
 
         message_send_button.clicked.connect(  # noqa
@@ -770,26 +1015,26 @@ class MainWindow(QMainWindow):
             'Введите сообщение...'
         )
 
+        message_text_edit.setSizePolicy(
+            QSizePolicy.Policy.Minimum,
+            QSizePolicy.Policy.Maximum
+        )
+
         # TODO: on text changed call handler && activate or deactivate message send button
 
         conversation_layout.addWidget(
             conversation_text_edit,
-            0, 0, 1, 8
-        )
-
-        conversation_layout.setRowMinimumHeight(  # TODO: make this better
-            0,
-            10000
+            0, 0, 1, 2
         )
 
         conversation_layout.addWidget(
             message_text_edit,
-            1, 0, 1, 7
+            1, 0, 1, 1
         )
 
         conversation_layout.addWidget(
             message_send_button,
-            1, 7, 1, 1
+            1, 1, 1, 1
         )
 
         window_layout.addLayout(
@@ -1036,13 +1281,17 @@ class MainWindow(QMainWindow):
             if local_i2p_node_sam_ip_address is None:
                 await (
                     self.__update_local_i2p_node_sam_session_incoming_data_connection_status(
-                        'Невозможно создать без адреса собственного узла'
+                        'Невозможно создать без адреса собственного узла',
+
+                        color=(
+                            'red'
+                        )
                     )
                 )
 
                 await (  # TODO: make this better
                     asyncio.sleep(
-                        1.0
+                        1.0  # s
                     )
                 )
 
@@ -1055,13 +1304,17 @@ class MainWindow(QMainWindow):
             if local_i2p_node_sam_port is None:
                 await (
                     self.__update_local_i2p_node_sam_session_incoming_data_connection_status(
-                        'Невозможно создать без I2P SAM порта'
+                        'Невозможно создать без I2P SAM порта',
+
+                        color=(
+                            'red'
+                        )
                     )
                 )
 
                 await (  # TODO: make this better
                     asyncio.sleep(
-                        1.0
+                        1.0  # s
                     )
                 )
 
@@ -1095,7 +1348,11 @@ class MainWindow(QMainWindow):
             except i2plib.exceptions.InvalidId:
                 await (
                     self.__update_local_i2p_node_sam_session_incoming_data_connection_status(
-                        'Ошибка: сессии не существует'
+                        'Ошибка: сессии не существует',
+
+                        color=(
+                            'red'
+                        )
                     )
                 )
 
@@ -1117,7 +1374,7 @@ class MainWindow(QMainWindow):
 
                 await (  # TODO: make this better
                     asyncio.sleep(
-                        1.0
+                        1.0  # s
                     )
                 )
 
@@ -1157,13 +1414,17 @@ class MainWindow(QMainWindow):
 
                 await (
                     self.__update_local_i2p_node_sam_session_incoming_data_connection_status(
-                        'Прервано'
+                        'Прервано',
+
+                        color=(
+                            'red'
+                        )
                     )
                 )
 
                 await (  # TODO: make this better
                     asyncio.sleep(
-                        1.0
+                        1.0  # s
                     )
                 )
 
@@ -1196,7 +1457,11 @@ class MainWindow(QMainWindow):
             if settled_remote_i2p_node_address_raw is None:
                 await (
                     self.__update_local_i2p_node_sam_session_incoming_data_connection_status(
-                        'Невозможно создать без I2P адреса удалённого узла'
+                        'Невозможно создать без I2P адреса удалённого узла',
+
+                        color=(
+                            'red'
+                        )
                     )
                 )
 
@@ -1210,7 +1475,7 @@ class MainWindow(QMainWindow):
 
                 await (  # TODO: make this better
                     asyncio.sleep(
-                        1.0
+                        1.0  # s
                     )
                 )
 
@@ -1225,7 +1490,11 @@ class MainWindow(QMainWindow):
             if not is_settled_remote_i2p_node_address_raw_valid:
                 await (
                     self.__update_local_i2p_node_sam_session_incoming_data_connection_status(
-                        'I2P адрес удалённого узла некорректен'
+                        'I2P адрес удалённого узла некорректен',
+
+                        color=(
+                            'red'
+                        )
                     )
                 )
 
@@ -1239,7 +1508,7 @@ class MainWindow(QMainWindow):
 
                 await (  # TODO: make this better
                     asyncio.sleep(
-                        1.0
+                        1.0  # s
                     )
                 )
 
@@ -1251,7 +1520,11 @@ class MainWindow(QMainWindow):
             ):
                 await (
                     self.__update_local_i2p_node_sam_session_incoming_data_connection_status(
-                        'I2P адрес подключенного клиента не соответствует прописанному'
+                        'I2P адрес подключенного клиента не соответствует прописанному',
+
+                        color=(
+                            'red'
+                        )
                     )
                 )
 
@@ -1265,7 +1538,7 @@ class MainWindow(QMainWindow):
 
                 await (  # TODO: make this better
                     asyncio.sleep(
-                        1.0
+                        1.0  # s
                     )
                 )
 
@@ -1273,7 +1546,11 @@ class MainWindow(QMainWindow):
 
             await (
                 self.__update_local_i2p_node_sam_session_incoming_data_connection_status(
-                    'Создано'
+                    'Создано',
+
+                    color=(
+                        'green'
+                    )
                 )
             )
 
@@ -1317,13 +1594,17 @@ class MainWindow(QMainWindow):
 
                 await (
                     self.__update_local_i2p_node_sam_session_incoming_data_connection_status(
-                        'Прервано'
+                        'Прервано',
+
+                        color=(
+                            'red'
+                        )
                     )
                 )
 
                 await (  # TODO: make this better
                     asyncio.sleep(
-                        1.0
+                        1.0  # s
                     )
                 )
 
@@ -1431,7 +1712,7 @@ class MainWindow(QMainWindow):
 
             await (
                 asyncio.sleep(
-                    1.0  # s
+                    5.0  # s
                 )
             )
 
@@ -1775,7 +2056,11 @@ class MainWindow(QMainWindow):
             if local_i2p_node_sam_ip_address is None:
                 await (
                     self.__update_local_i2p_node_sam_session_outgoing_data_connection_status(
-                        'Невозможно создать без адреса собственного узла'
+                        'Невозможно создать без адреса собственного узла',
+
+                        color=(
+                            'red'
+                        )
                     )
                 )
 
@@ -1794,7 +2079,11 @@ class MainWindow(QMainWindow):
             if local_i2p_node_sam_port is None:
                 await (
                     self.__update_local_i2p_node_sam_session_outgoing_data_connection_status(
-                        'Невозможно создать без I2P SAM порта'
+                        'Невозможно создать без I2P SAM порта',
+
+                        color=(
+                            'red'
+                        )
                     )
                 )
 
@@ -1813,7 +2102,11 @@ class MainWindow(QMainWindow):
             if remote_i2p_node_address_raw is None:
                 await (
                     self.__update_local_i2p_node_sam_session_outgoing_data_connection_status(
-                        'Невозможно создать без I2P адреса удалённого узла'
+                        'Невозможно создать без I2P адреса удалённого узла',
+
+                        color=(
+                            'red'
+                        )
                     )
                 )
 
@@ -1834,7 +2127,11 @@ class MainWindow(QMainWindow):
             if not is_remote_i2p_node_address_raw_valid:
                 await (
                     self.__update_local_i2p_node_sam_session_outgoing_data_connection_status(
-                        'I2P адрес удалённого узла некорректен'
+                        'I2P адрес удалённого узла некорректен',
+
+                        color=(
+                            'red'
+                        )
                     )
                 )
 
@@ -1884,7 +2181,11 @@ class MainWindow(QMainWindow):
             except i2plib.exceptions.CantReachPeer:
                 await (
                     self.__update_local_i2p_node_sam_session_outgoing_data_connection_status(
-                        'Не удалось подключиться к удалённому узлу'
+                        'Не удалось подключиться к удалённому узлу',
+
+                        color=(
+                            'red'
+                        )
                     )
                 )
 
@@ -1898,7 +2199,11 @@ class MainWindow(QMainWindow):
             except i2plib.exceptions.InvalidId:
                 await (
                     self.__update_local_i2p_node_sam_session_outgoing_data_connection_status(
-                        'Ошибка: сессии не существует'
+                        'Ошибка: сессии не существует',
+
+                        color=(
+                            'red'
+                        )
                     )
                 )
 
@@ -1920,7 +2225,11 @@ class MainWindow(QMainWindow):
             except i2plib.exceptions.InvalidKey:
                 await (
                     self.__update_local_i2p_node_sam_session_outgoing_data_connection_status(
-                        'Ошибка: некорректный I2P адрес удалённого узла'
+                        'Ошибка: некорректный I2P адрес удалённого узла',
+
+                        color=(
+                            'red'
+                        )
                     )
                 )
 
@@ -1943,7 +2252,11 @@ class MainWindow(QMainWindow):
 
             await (
                 self.__update_local_i2p_node_sam_session_outgoing_data_connection_status(
-                    'Создано'
+                    'Создано',
+
+                    color=(
+                        'green'
+                    )
                 )
             )
 
@@ -1992,7 +2305,11 @@ class MainWindow(QMainWindow):
 
                 await (
                     self.__update_local_i2p_node_sam_session_outgoing_data_connection_status(
-                        'Прервано'
+                        'Прервано',
+
+                        color=(
+                            'red'
+                        )
                     )
                 )
 
@@ -2012,6 +2329,7 @@ class MainWindow(QMainWindow):
                 self.__last_remote_i2p_node_ping_timestamp_ms
             )
 
+            new_remote_i2p_node_status_color: str
             new_remote_i2p_node_status_raw: str
 
             if last_remote_i2p_node_ping_timestamp_ms is not None:
@@ -2022,6 +2340,10 @@ class MainWindow(QMainWindow):
                 delta_time_ms = (
                     current_timestamp_ms -
                     last_remote_i2p_node_ping_timestamp_ms
+                )
+
+                new_remote_i2p_node_status_color = (
+                    'green'
                 )
 
                 if (
@@ -2041,13 +2363,21 @@ class MainWindow(QMainWindow):
                         f'Онлайн ({delta_time_seconds} с)'
                     )
             else:
+                new_remote_i2p_node_status_color = (
+                    'red'
+                )
+
                 new_remote_i2p_node_status_raw = (
                     'Оффлайн'
                 )
 
             await (
                 self.__update_remote_i2p_node_status(
-                    new_remote_i2p_node_status_raw
+                    new_remote_i2p_node_status_raw,
+
+                    color=(
+                        new_remote_i2p_node_status_color
+                    )
                 )
             )
 
@@ -2972,7 +3302,11 @@ class MainWindow(QMainWindow):
 
                 await (
                     self.__update_local_i2p_node_sam_session_status(
-                        'Невозможно создать без адреса собственного узла'
+                        'Невозможно создать без адреса собственного узла',
+
+                        color=(
+                            'red'
+                        )
                     )
                 )
 
@@ -2993,7 +3327,11 @@ class MainWindow(QMainWindow):
 
                 await (
                     self.__update_local_i2p_node_sam_session_status(
-                        'Невозможно создать без I2P SAM адреса'
+                        'Невозможно создать без I2P SAM адреса',
+
+                        color=(
+                            'red'
+                        )
                     )
                 )
 
@@ -3014,7 +3352,11 @@ class MainWindow(QMainWindow):
 
                 await (
                     self.__update_local_i2p_node_sam_session_status(
-                        'Невозможно создать без I2P SAM порта'
+                        'Невозможно создать без I2P SAM порта',
+
+                        color=(
+                            'red'
+                        )
                     )
                 )
 
@@ -3072,7 +3414,11 @@ class MainWindow(QMainWindow):
 
                     await (
                         self.__update_local_i2p_node_sam_session_status(
-                            'Тайм-аут'
+                            'Тайм-аут',
+
+                            color=(
+                                'red'
+                            )
                         )
                     )
 
@@ -3093,7 +3439,11 @@ class MainWindow(QMainWindow):
 
             await (
                 self.__update_local_i2p_node_sam_session_status(
-                    'Создана'
+                    'Создана',
+
+                    color=(
+                        'green'
+                    )
                 )
             )
 
@@ -3102,7 +3452,13 @@ class MainWindow(QMainWindow):
     async def __update_local_i2p_node_sam_session_incoming_data_connection_status(
             self,
 
-            new_local_i2p_node_sam_session_incoming_data_connection_status_raw: str
+            new_local_i2p_node_sam_session_incoming_data_connection_status_raw: str,
+
+            color: (
+                typing.Optional[
+                    str
+                ]
+            ) = None
     ) -> None:
         local_i2p_node_sam_session_incoming_data_connection_status_value_label = (
             self.__local_i2p_node_sam_session_incoming_data_connection_status_value_label
@@ -3135,10 +3491,25 @@ class MainWindow(QMainWindow):
             new_local_i2p_node_sam_session_incoming_data_connection_status_raw
         )
 
+        if color is not None:
+            local_i2p_node_sam_session_incoming_data_connection_status_value_label.setStyleSheet(
+                f'color: {color};'
+            )
+        else:
+            local_i2p_node_sam_session_incoming_data_connection_status_value_label.setStyleSheet(
+                ''
+            )
+
     async def __update_local_i2p_node_sam_session_outgoing_data_connection_status(
             self,
 
-            new_local_i2p_node_sam_session_outgoing_data_connection_status_raw: str
+            new_local_i2p_node_sam_session_outgoing_data_connection_status_raw: str,
+
+            color: (
+                typing.Optional[
+                    str
+                ]
+            ) = None
     ) -> None:
         local_i2p_node_sam_session_outgoing_data_connection_status_value_label = (
             self.__local_i2p_node_sam_session_outgoing_data_connection_status_value_label
@@ -3171,10 +3542,25 @@ class MainWindow(QMainWindow):
             new_local_i2p_node_sam_session_outgoing_data_connection_status_raw
         )
 
+        if color is not None:
+            local_i2p_node_sam_session_outgoing_data_connection_status_value_label.setStyleSheet(
+                f'color: {color};'
+            )
+        else:
+            local_i2p_node_sam_session_outgoing_data_connection_status_value_label.setStyleSheet(
+                ''
+            )
+
     async def __update_local_i2p_node_sam_session_status(
             self,
 
-            new_local_i2p_node_sam_session_status_raw: str
+            new_local_i2p_node_sam_session_status_raw: str,
+
+            color: (
+                typing.Optional[
+                    str
+                ]
+            ) = None
     ) -> None:
         local_i2p_node_sam_session_status_value_label = (
             self.__local_i2p_node_sam_session_status_value_label
@@ -3207,10 +3593,25 @@ class MainWindow(QMainWindow):
             new_local_i2p_node_sam_session_status_raw
         )
 
+        if color is not None:
+            local_i2p_node_sam_session_status_value_label.setStyleSheet(
+                f'color: {color};'
+            )
+        else:
+            local_i2p_node_sam_session_status_value_label.setStyleSheet(
+                ''
+            )
+
     async def __update_remote_i2p_node_status(
             self,
 
-            new_remote_i2p_node_status_raw: str
+            new_remote_i2p_node_status_raw: str,
+
+            color: (
+                typing.Optional[
+                    str
+                ]
+            ) = None
     ) -> None:
         remote_i2p_node_status_value_label = (
             self.__remote_i2p_node_status_value_label
@@ -3242,6 +3643,15 @@ class MainWindow(QMainWindow):
         self.__remote_i2p_node_status_raw = (
             new_remote_i2p_node_status_raw
         )
+
+        if color is not None:
+            remote_i2p_node_status_value_label.setStyleSheet(
+                f'color: {color};'
+            )
+        else:
+            remote_i2p_node_status_value_label.setStyleSheet(
+                ''
+            )
 
 
 async def run_application(
