@@ -1,8 +1,10 @@
-import typing
-
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import (
+# from PySide6.QtCore import (
+    Qt
+)
 
 from PyQt6.QtWidgets import (
+# from PySide6.QtWidgets import (
     # QComboBox,
     QLabel
 )
@@ -28,4 +30,6 @@ class QtUtils(object):
 
         label.adjustSize()
 
-        return label
+        return (
+            label
+        )

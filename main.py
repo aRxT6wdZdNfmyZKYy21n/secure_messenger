@@ -27,10 +27,16 @@ import i2plib  # noqa
 import orjson
 
 from PyQt6.QtCore import (
+# from PySide6.QtCore import (
     Qt
 )
 
+from PyQt6.QtGui import (
+    QFontDatabase
+)
+
 from PyQt6.QtWidgets import (
+# from PySide6.QtWidgets import (
     QApplication,
     QGridLayout,
     QLineEdit,
@@ -44,6 +50,14 @@ from PyQt6.QtWidgets import (
 from qasync import (
     QEventLoop,
     asyncSlot
+)
+
+from helpers.connection import (
+    Connection
+)
+
+from helpers.custom_stream_handler import (
+    CustomStreamHandler
 )
 
 from utils.json import (
@@ -108,190 +122,6 @@ logger = (
         __name__
     )
 )
-
-
-class _Connection(object):
-    __slots__ = (
-        '__reader',
-        '__writer'
-    )
-
-    def __init__(
-            self,
-
-            reader: (
-                asyncio.StreamReader
-            ),
-
-            writer: (
-                asyncio.StreamWriter
-            ),
-    ) -> None:
-        super(
-            _Connection,
-            self
-        ).__init__()
-
-        self.__reader = (
-            reader
-        )
-
-        self.__writer = (
-            writer
-        )
-
-    def close(
-            self
-    ) -> None:
-        self.__writer.close()
-
-    async def read_raw_data(
-            self
-    ) -> (
-            typing.Optional[
-                typing.Dict
-            ]
-    ):
-        line_bytes = (
-            await (
-                self.__reader.readline()
-            )
-        )
-
-        if not line_bytes:
-            return None
-
-        line = (
-            line_bytes.rstrip().decode()
-        )
-
-        raw_data = (
-            orjson.loads(
-                line
-            )
-        )
-
-        logger.info(
-            'Received raw_data'
-            f': {raw_data}'
-        )
-
-        return (
-            raw_data
-        )
-
-    def send_raw_data(
-            self,
-
-            raw_data: (
-                typing.Dict
-            )
-    ) -> bool:
-        self.__writer.write(
-            orjson.dumps(
-                raw_data
-            ) +
-
-            b'\n'
-        )
-
-        logger.info(
-            'Sent raw data'
-            f': {raw_data}'
-        )
-
-        return True
-
-
-class _CustomStreamHandler(logging.StreamHandler):
-    __slots__ = (
-        '__stderr_stream_handler',
-        '__stdout_stream_handler'
-    )
-
-    terminator = '\n'
-
-    def __init__(
-            self
-    ):
-        super(
-            _CustomStreamHandler,
-            self
-        ).__init__()
-
-        self.__stderr_stream_handler = (
-            logging.StreamHandler(
-                stream=(
-                    sys.stderr
-                )
-            )
-        )
-
-        self.__stdout_stream_handler = (
-            logging.StreamHandler(
-                stream=(
-                    sys.stdout
-                )
-            )
-        )
-
-    def flush(
-            self
-    ) -> None:
-        self.acquire()
-
-        try:
-            self.__stderr_stream_handler.flush()
-            self.__stdout_stream_handler.flush()
-        finally:
-            self.release()
-
-    def emit(
-            self,
-
-            record: (
-                logging.LogRecord
-            )
-    ):
-        level_number = (
-            record.levelno
-        )
-
-        stream_handler: (
-            logging.StreamHandler
-        )
-
-        if (
-                level_number >=
-                logging.WARNING
-        ):
-            stream_handler = (
-                self.__stderr_stream_handler
-            )
-        else:
-            stream_handler = (
-                self.__stdout_stream_handler
-            )
-
-        stream_handler.emit(
-            record
-        )
-
-    def setStream(
-            self,
-
-            stream
-    ):
-        raise (
-            NotImplementedError
-        )
-
-    def __repr__(
-            self
-    ) -> str:
-        return (
-            f'[{self.__class__.__name__}]'
-        )
 
 
 class MainWindow(QMainWindow):
@@ -753,6 +583,34 @@ class MainWindow(QMainWindow):
 
         # Filling conversation layout
 
+        # TODO:
+        #   render glyph failed err=9e
+        #   QFontEngine: Glyph rendered in unknown pixel_mode=0
+
+        assert (
+            QFontDatabase.addApplicationFont(
+                './'
+                'data/'
+                'static/'
+                # 'NotoColorEmoji-Regular.ttf'
+                'NotoColorEmoji.ttf'
+                # 'Noto-COLRv1.ttf'
+            ) ==
+
+            0
+        ), (
+            'Could not load emoji font'
+        )
+
+        print(
+            QFontDatabase.families()
+        )
+
+        QFontDatabase.addApplicationEmojiFontFamily(
+            # 'NotoColorEmoji-Regular'
+            'Noto Color Emoji'
+        )
+
         conversation_layout = (
             QGridLayout()
         )
@@ -920,7 +778,7 @@ class MainWindow(QMainWindow):
 
         self.__local_i2p_node_sam_session_control_connection: (
             typing.Optional[
-                _Connection
+                Connection
             ]
         ) = None
 
@@ -930,7 +788,7 @@ class MainWindow(QMainWindow):
 
         self.__local_i2p_node_sam_session_incoming_data_connection: (
             typing.Optional[
-                _Connection
+                Connection
             ]
         ) = None
 
@@ -952,7 +810,7 @@ class MainWindow(QMainWindow):
 
         self.__local_i2p_node_sam_session_outgoing_data_connection: (
             typing.Optional[
-                _Connection
+                Connection
             ]
         ) = None
 
@@ -1145,7 +1003,7 @@ class MainWindow(QMainWindow):
             self.__local_i2p_node_sam_session_incoming_data_connection = (
                 local_i2p_node_sam_session_incoming_data_connection
             ) = (
-                _Connection(
+                Connection(
                     local_i2p_node_sam_session_incoming_data_reader,
                     local_i2p_node_sam_session_incoming_data_writer
                 )
@@ -1351,7 +1209,7 @@ class MainWindow(QMainWindow):
     @staticmethod
     def __send_ack_raw_data(
             connection: (
-                _Connection
+                Connection
             ),
 
             message_id: int
@@ -1373,7 +1231,7 @@ class MainWindow(QMainWindow):
     @staticmethod
     def __send_message_raw_data(
             connection: (
-                _Connection
+                Connection
             ),
 
             message_id: int,
@@ -1403,7 +1261,7 @@ class MainWindow(QMainWindow):
     @staticmethod
     async def __start_local_i2p_node_sam_session_data_connection_pinging_loop(
             connection: (
-                _Connection
+                Connection
             )
     ) -> None:
         while True:
@@ -1423,7 +1281,7 @@ class MainWindow(QMainWindow):
             self,
 
             connection: (
-                _Connection
+                Connection
             )
     ) -> None:
         local_i2p_node_pending_message_raw_data_by_id_map = (
@@ -1458,7 +1316,7 @@ class MainWindow(QMainWindow):
             self,
 
             connection: (
-                _Connection
+                Connection
             )
     ) -> None:
         local_i2p_node_pending_message_raw_data_by_id_map = (
@@ -1852,7 +1710,7 @@ class MainWindow(QMainWindow):
             self.__local_i2p_node_sam_session_outgoing_data_connection = (
                 local_i2p_node_sam_session_outgoing_data_connection
             ) = (
-                _Connection(
+                Connection(
                     local_i2p_node_sam_session_outgoing_data_reader,
                     local_i2p_node_sam_session_outgoing_data_writer
                 )
@@ -2581,6 +2439,15 @@ class MainWindow(QMainWindow):
             io.StringIO()
         )
 
+        new_conversation_html_io.write(
+            '\n'.join((
+                '<html>',
+                '    <head>',
+                '    </head>',
+                '    <body>'
+            ))
+        )
+
         for message_idx, timestamp_ms in (
                 enumerate(
                     sorted(
@@ -2594,7 +2461,7 @@ class MainWindow(QMainWindow):
             #     )
 
             new_conversation_html_io.write(
-                f'<div id="message_{message_idx}">'
+                f'        <div id="message_{message_idx}" style="font-size: 14pt;">'
             )
 
             message_datetime = (
@@ -2650,7 +2517,7 @@ class MainWindow(QMainWindow):
                         )
                     else:
                         new_conversation_html_io.write(
-                            '[⌛ Ожидание доставки...]',
+                            '[<font face="Noto Color Emoji">⌛</font> <i>Ожидание доставки...</i>]',
                         )
                 else:
                     new_conversation_html_io.write(
@@ -2668,8 +2535,15 @@ class MainWindow(QMainWindow):
                 )
 
             new_conversation_html_io.write(
-                '</div>'
+                '        </div>'
             )
+
+        new_conversation_html_io.write(
+            '\n'.join((
+                '</body>',
+                '</html>'
+            ))
+        )
 
         new_conversation_html_io.seek(
             0
@@ -2859,7 +2733,7 @@ class MainWindow(QMainWindow):
                     continue
 
             self.__local_i2p_node_sam_session_control_connection = (
-                _Connection(
+                Connection(
                     local_i2p_node_sam_session_control_reader,
                     local_i2p_node_sam_session_control_writer
                 )
@@ -3061,7 +2935,7 @@ async def run_application(
 
 def main() -> None:
     logging_handlers = [
-        _CustomStreamHandler()
+        CustomStreamHandler()
     ]
 
     logging_level: str
@@ -3133,6 +3007,7 @@ def main() -> None:
             application
         )
     )
+
     # asyncio.run(
     #     run_application(
     #         application
