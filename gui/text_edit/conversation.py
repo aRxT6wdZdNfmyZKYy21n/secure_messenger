@@ -4,7 +4,6 @@ import typing
 import i2plib  # noqa
 
 from PyQt6.QtCore import (
-# from PySide6.QtCore import (
     QMimeData
 )
 
@@ -13,7 +12,6 @@ from PyQt6.QtGui import (
 )
 
 from PyQt6.QtWidgets import (
-# from PySide6.QtWidgets import (
     QTextEdit
 )
 

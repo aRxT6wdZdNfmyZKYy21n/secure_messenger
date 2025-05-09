@@ -12,18 +12,15 @@ from lxml import (
 )
 
 from PyQt6.QtCore import (
-# from PySide6.QtCore import (
     QBuffer,
     Qt
 )
 
 from PyQt6.QtGui import (
-# from PySide6.QtGui import (
     QImage
 )
 
 from PyQt6.QtWidgets import (
-# from PySide6.QtWidgets import (
     # QComboBox,
     QLabel
 )

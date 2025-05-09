@@ -25,7 +25,6 @@ import i2plib  # noqa
 import orjson
 
 from PyQt6.QtCore import (
-# from PySide6.QtCore import (
     Qt
 )
 
@@ -34,7 +33,6 @@ from PyQt6.QtGui import (
 )
 
 from PyQt6.QtWidgets import (
-    # from PySide6.QtWidgets import (
     QGridLayout,
     QLineEdit,
     QMainWindow,
@@ -64,6 +62,10 @@ from utils.json import (
     JsonUtils
 )
 
+from utils.os import (
+    OsUtils
+)
+
 from utils.qt import (
     QtUtils
 )
@@ -81,9 +83,11 @@ _CONFIG_FILE_NAME = (
 )
 
 _CONFIG_FILE_PATH = (
-    './'
-    'data/' +
-    _CONFIG_FILE_NAME
+    OsUtils.get_path(
+        './'
+        'data/' +
+        _CONFIG_FILE_NAME
+    )
 )
 
 
@@ -563,12 +567,14 @@ class MainWindow(QMainWindow):
 
         assert (
             QFontDatabase.addApplicationFont(
-                './'
-                'data/'
-                'static/'
-                # 'NotoColorEmoji-Regular.ttf'
-                'NotoColorEmoji.ttf'
-                # 'Noto-COLRv1.ttf'
+                OsUtils.get_path(
+                    './'
+                    'data/'
+                    'static/'
+                    # 'NotoColorEmoji-Regular.ttf'
+                    'NotoColorEmoji.ttf'
+                    # 'Noto-COLRv1.ttf'
+                )
             ) ==
 
             0

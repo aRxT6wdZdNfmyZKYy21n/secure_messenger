@@ -3,5 +3,4 @@ git+https://codeberg.org/weko/i2plib-fork.git
 lxml
 orjson
 PyQt6
-# PySide6
 qasync
