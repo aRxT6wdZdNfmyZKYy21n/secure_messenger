@@ -5,16 +5,22 @@ import i2plib  # noqa
 
 from PyQt6.QtCore import (
 # from PySide6.QtCore import (
-    QMimeData
+    QMimeData,
+    Qt
 )
 
 from PyQt6.QtGui import (
-    QImage
+    QImage,
+    QKeyEvent, QKeySequence
 )
 
 from PyQt6.QtWidgets import (
 # from PySide6.QtWidgets import (
     QTextEdit
+)
+
+from events.async_event import (
+    AsyncEvent
 )
 
 from utils.qt import (
@@ -32,6 +38,7 @@ logger = (
 class MessageTextEdit(QTextEdit):
     __slots__ = (
         '__images',
+        '__on_message_send_key_pressed_event'
     )
 
     def __init__(
@@ -52,6 +59,12 @@ class MessageTextEdit(QTextEdit):
             ]
         ) = []
 
+        self.__on_message_send_key_pressed_event = (
+            AsyncEvent(
+                'OnMessageSendKeyPressedEvent'
+            )
+        )
+
         self.__update_height()
 
     def clear(self) -> None:
@@ -61,6 +74,13 @@ class MessageTextEdit(QTextEdit):
         ).clear()
 
         self.__images.clear()
+
+    def get_on_message_send_key_pressed_event(
+            self
+    ) -> AsyncEvent:
+        return (
+            self.__on_message_send_key_pressed_event
+        )
 
     def images(
             self
@@ -237,6 +257,61 @@ class MessageTextEdit(QTextEdit):
                 'urls'
                 f': {source.urls()!r}'
             )
+
+    def keyPressEvent(
+            self,
+
+            event: (
+                QKeyEvent
+            )
+    ) -> None:
+        key = (
+            event.key()
+        )
+
+        if (
+                key not in
+
+                (
+                    Qt.Key.Key_Enter,
+                    Qt.Key.Key_Return
+                )
+        ):
+            super(
+                MessageTextEdit,
+                self
+            ).keyPressEvent(
+                event
+            )
+
+            return
+
+        modifier = (
+            event.modifiers()
+        )
+
+        if (
+                modifier not in
+
+                (
+                    Qt.KeyboardModifier.NoModifier,
+                    Qt.KeyboardModifier.KeypadModifier
+                )
+        ):
+            super(
+                MessageTextEdit,
+                self
+            ).keyPressEvent(
+                event
+            )
+
+            return
+
+        print(
+            'on_message_send_key_pressed_event'
+        )
+
+        self.__on_message_send_key_pressed_event()
 
     def __add_image(
             self,

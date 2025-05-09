@@ -34,7 +34,7 @@ from PyQt6.QtGui import (
 )
 
 from PyQt6.QtWidgets import (
-# from PySide6.QtWidgets import (
+    # from PySide6.QtWidgets import (
     QGridLayout,
     QLineEdit,
     QMainWindow,
@@ -626,6 +626,14 @@ class MainWindow(QMainWindow):
         message_text_edit.setSizePolicy(
             QSizePolicy.Policy.Minimum,
             QSizePolicy.Policy.Maximum
+        )
+
+        on_message_send_key_pressed_event = (
+            message_text_edit.get_on_message_send_key_pressed_event()
+        )
+
+        on_message_send_key_pressed_event += (
+            self.__on_message_send_button_clicked
         )
 
         # TODO: on text changed call handler && activate or deactivate message send button
