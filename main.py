@@ -13,6 +13,10 @@ from qasync import (
     QEventLoop
 )
 
+from common import (
+    Constants
+)
+
 from globals.common import (
     g_common_globals
 )
@@ -106,6 +110,23 @@ async def run_application(
 
 
 def main() -> None:
+    # Create data directory
+
+    data_directory_path = (
+        Constants.Path.DataDirectory
+    )
+
+    if not (
+            os.path.exists(
+                data_directory_path
+            )
+    ):
+        os.makedirs(
+            data_directory_path
+        )
+
+    # Set up logging
+
     logging_handlers = [
         CustomStreamHandler()
     ]

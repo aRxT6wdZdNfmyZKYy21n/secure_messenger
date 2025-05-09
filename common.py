@@ -13,3 +13,9 @@ class Constants(object):
             ]
         ]
     )
+
+    class Path(object):
+        DataDirectory = (
+            './'
+            'data/'
+        )

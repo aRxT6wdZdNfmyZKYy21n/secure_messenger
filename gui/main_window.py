@@ -46,6 +46,10 @@ from qasync import (
     asyncSlot
 )
 
+from common import (
+    Constants
+)
+
 from gui.text_edit.conversation import (
     ConversationTextEdit
 )
@@ -83,11 +87,8 @@ _CONFIG_FILE_NAME = (
 )
 
 _CONFIG_FILE_PATH = (
-    OsUtils.get_path(
-        './'
-        'data/' +
-        _CONFIG_FILE_NAME
-    )
+    Constants.Path.DataDirectory +
+    _CONFIG_FILE_NAME
 )
 
 
