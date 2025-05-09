@@ -2857,6 +2857,14 @@ class MainWindow(QMainWindow):
             new_conversation_html
         )
 
+        vertical_scroll_bar = (
+            conversation_text_edit.verticalScrollBar()
+        )
+
+        vertical_scroll_bar.setValue(
+            vertical_scroll_bar.maximum()
+        )
+
     def __update_local_i2p_node_address(
             self
     ) -> None:
