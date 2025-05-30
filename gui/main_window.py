@@ -75,7 +75,7 @@ from utils.qt import (
 )
 
 from utils.time import (
-    get_aware_current_timestamp_ms
+    TimeUtils
 )
 
 
@@ -1440,7 +1440,7 @@ class MainWindow(QMainWindow):
                     'ping'
             ):
                 self.__last_remote_i2p_node_ping_timestamp_ms = (
-                    get_aware_current_timestamp_ms()
+                    TimeUtils.get_aware_current_timestamp_ms()
                 )
             elif (
                     raw_data_type ==
@@ -1633,7 +1633,7 @@ class MainWindow(QMainWindow):
 
                 message_raw_data = {
                     'timestamp_ms': (
-                        get_aware_current_timestamp_ms()
+                        TimeUtils.get_aware_current_timestamp_ms()
                     )
                 }
 
@@ -1957,7 +1957,7 @@ class MainWindow(QMainWindow):
 
             if last_remote_i2p_node_ping_timestamp_ms is not None:
                 current_timestamp_ms = (
-                    get_aware_current_timestamp_ms()
+                    TimeUtils.get_aware_current_timestamp_ms()
                 )
 
                 delta_time_ms = (
@@ -2458,7 +2458,7 @@ class MainWindow(QMainWindow):
             message_raw_data[
                 'timestamp_ms'
             ]
-        ) = get_aware_current_timestamp_ms()
+        ) = TimeUtils.get_aware_current_timestamp_ms()
 
         (
             local_i2p_node_message_raw_data_by_id_map[

@@ -3,26 +3,32 @@ from datetime import (
     timezone
 )
 
-def get_aware_current_datetime() -> (
-        datetime
-):
-    return (
-        datetime.now(
-            tz=(
-                timezone.utc
+class TimeUtils(object):
+    __slots__ = ()
+
+    @staticmethod
+    def get_aware_current_datetime() -> (
+            datetime
+    ):
+        return (
+            datetime.now(
+                tz=(
+                    timezone.utc
+                )
             )
         )
-    )
 
-
-def get_aware_current_timestamp_ms() -> int:
-    aware_current_datetime = (
-        get_aware_current_datetime()
-    )
-
-    return (
-        int(
-            aware_current_datetime.timestamp() *
-            1000.
+    @classmethod
+    def get_aware_current_timestamp_ms(
+            cls
+    ) -> int:
+        aware_current_datetime = (
+            cls.get_aware_current_datetime()
         )
-    )
+
+        return (
+            int(
+                aware_current_datetime.timestamp() *
+                1000.
+            )
+        )
