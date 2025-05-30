@@ -140,11 +140,11 @@ class QtUtils(object):
         )
 
         assert (
-                len(
-                    body_elements
-                ) ==
+            len(
+                body_elements
+            ) ==
 
-                1
+            1
         )
 
         body_element = (

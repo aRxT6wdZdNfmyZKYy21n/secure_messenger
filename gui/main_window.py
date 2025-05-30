@@ -112,7 +112,6 @@ class MainWindow(QMainWindow):
         '__local_i2p_node_pending_message_raw_data_by_id_map',
         '__local_i2p_node_sam_ip_address',
         '__local_i2p_node_sam_ip_address_line_edit',
-        '__local_i2p_node_sam_port',
         '__local_i2p_node_sam_ip_address_raw',
         '__local_i2p_node_sam_port',
         '__local_i2p_node_sam_port_raw',
