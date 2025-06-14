@@ -24,11 +24,11 @@ from ipaddress import (
 import i2plib  # noqa
 import orjson
 
-from PyQt6.QtCore import (
+from PySide6.QtCore import (
     Qt
 )
 
-from PyQt6.QtWidgets import (
+from PySide6.QtWidgets import (
     QGridLayout,
     QLineEdit,
     QMainWindow,

@@ -11,16 +11,16 @@ from lxml import (
     etree
 )
 
-from PyQt6.QtCore import (
+from PySide6.QtCore import (
     QBuffer,
     Qt
 )
 
-from PyQt6.QtGui import (
+from PySide6.QtGui import (
     QImage
 )
 
-from PyQt6.QtWidgets import (
+from PySide6.QtWidgets import (
     # QComboBox,
     QLabel
 )
@@ -78,13 +78,13 @@ class QtUtils(object):
             image_buffer,
 
             format=(
-                'png'
+                b'png'
             )
         )
 
         return (
             b64encode(
-                image_buffer.data()
+                image_buffer.data().data()
             ).decode()
         )
 
@@ -210,7 +210,7 @@ class QtUtils(object):
                                 ),
 
                                 format=(
-                                        'png'
+                                    b'png'
                                 )
                             )
                     ):
