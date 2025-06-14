@@ -28,10 +28,6 @@ from PyQt6.QtCore import (
     Qt
 )
 
-from PyQt6.QtGui import (
-    QFontDatabase
-)
-
 from PyQt6.QtWidgets import (
     QGridLayout,
     QLineEdit,
@@ -64,10 +60,6 @@ from helpers.connection import (
 
 from utils.json import (
     JsonUtils
-)
-
-from utils.os import (
-    OsUtils
 )
 
 from utils.qt import (
@@ -560,32 +552,6 @@ class MainWindow(QMainWindow):
         )
 
         # Filling conversation layout
-
-        # TODO:
-        #   render glyph failed err=9e
-        #   QFontEngine: Glyph rendered in unknown pixel_mode=0
-
-        assert (
-            QFontDatabase.addApplicationFont(
-                OsUtils.get_path(
-                    './'
-                    'data/'
-                    'static/'
-                    # 'NotoColorEmoji-Regular.ttf'
-                    'NotoColorEmoji.ttf'
-                    # 'Noto-COLRv1.ttf'
-                )
-            ) ==
-
-            0
-        ), (
-            'Could not load emoji font'
-        )
-
-        QFontDatabase.addApplicationEmojiFontFamily(
-            # 'NotoColorEmoji-Regular'
-            'Noto Color Emoji'
-        )
 
         conversation_layout = (
             QGridLayout()

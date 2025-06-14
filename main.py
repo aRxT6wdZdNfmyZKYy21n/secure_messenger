@@ -5,6 +5,10 @@ import sys
 
 import i2plib  # noqa
 
+from PyQt6.QtGui import (
+    QFontDatabase
+)
+
 from PyQt6.QtWidgets import (
     QApplication
 )
@@ -27,6 +31,10 @@ from gui.main_window import (
 
 from helpers.custom_stream_handler import (
     CustomStreamHandler
+)
+
+from utils.os import (
+    OsUtils
 )
 
 
@@ -73,6 +81,36 @@ async def run_application(
             QApplication
         )
 ) -> None:
+    # Set up application fonts
+
+    # TODO:
+    #   render glyph failed err=9e
+    #   QFontEngine: Glyph rendered in unknown pixel_mode=0
+
+    assert (
+        QFontDatabase.addApplicationFont(
+            OsUtils.get_path(
+                './'
+                'data/'
+                'static/'
+                # 'NotoColorEmoji-Regular.ttf'
+                'NotoColorEmoji.ttf'
+                # 'Noto-COLRv1.ttf'
+            )
+        ) ==
+
+        0
+    ), (
+        'Could not load emoji font'
+    )
+
+    QFontDatabase.addApplicationEmojiFontFamily(
+        # 'NotoColorEmoji-Regular'
+        'Noto Color Emoji'
+    )
+
+    # Set up events
+
     application_close_event = (
         asyncio.Event()
     )
