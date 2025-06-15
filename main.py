@@ -93,9 +93,7 @@ async def run_application(
                 './'
                 'data/'
                 'static/'
-                # 'NotoColorEmoji-Regular.ttf'
                 'NotoColorEmoji.ttf'
-                # 'Noto-COLRv1.ttf'
             )
         ) ==
 
