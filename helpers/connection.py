@@ -60,9 +60,7 @@ class Connection(object):
                 _DEFAULT_TIMEOUT
             )
     ) -> (
-            typing.Optional[
-                typing.Dict
-            ]
+            typing.Dict | None
     ):
         line_bytes_count_bytes = (
             await (
@@ -262,9 +260,7 @@ class Connection(object):
                 _DEFAULT_TIMEOUT
             )
     ) -> (
-            typing.Optional[
-                bytes
-            ]
+            bytes | None
     ):
         reader = (
             self.__reader

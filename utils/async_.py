@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import traceback
 import typing
 
@@ -6,19 +7,17 @@ from concurrent.futures import (
     Future
 )
 
+T = typing.TypeVar("T")
+
+logger = logging.getLogger(
+    __name__,
+)
 
 async def log_exceptions(
-        awaitable: (
-            typing.Awaitable
-        )
-) -> (
-        typing.Any  # TODO: is type correct?
-):
-    assert (  # TODO: remove
-        awaitable is not None
-    ), (
-        awaitable
-    )
+        awaitable: typing.Awaitable[T]
+) -> T:
+    if awaitable is None:
+        raise ValueError("awaitable must not be None")
 
     try:
         return (
@@ -27,24 +26,16 @@ async def log_exceptions(
             )
         )
     except Exception as exception:
-        print(
-            'Unhandled exception'
-            f': {"".join(traceback.format_exception(exception))}'
+        logger.error(
+            'Unhandled exception: %s',
+            "".join(traceback.format_exception(exception))
         )
-
-        raise (
-            exception
-        )
+        raise exception
 
 
 def create_task_with_exceptions_logging(
-        coroutine: typing.Coroutine,
-
-        name: (
-            typing.Optional[
-                str
-            ]
-        ) = None
+        coroutine: typing.Coroutine[typing.Any, typing.Any, T],
+        name: str | None = None
 ) -> asyncio.Task:
     return (
         asyncio.create_task(
@@ -60,16 +51,9 @@ def create_task_with_exceptions_logging(
 
 
 def run_coroutine_threadsafe_with_exceptions_logging(
-        coroutine: (
-            typing.Coroutine
-        ),
-
-        event_loop: (
-            asyncio.AbstractEventLoop
-        )
-) -> (
-        Future
-):
+        coroutine: typing.Coroutine[typing.Any, typing.Any, T],
+        event_loop: asyncio.AbstractEventLoop
+) -> Future:
     return (
         asyncio.run_coroutine_threadsafe(
             log_exceptions(
@@ -82,21 +66,9 @@ def run_coroutine_threadsafe_with_exceptions_logging(
 
 
 def create_task_with_exceptions_logging_threadsafe(
-        coroutine: (
-            typing.Coroutine
-        ),
-
-        name: (
-            typing.Optional[
-                str
-            ]
-        ) = None
-) -> (
-        typing.Union[
-            asyncio.Task,
-            Future
-        ]
-):
+        coroutine: typing.Coroutine[typing.Any, typing.Any, T],
+        name: str | None = None
+) -> typing.Union[asyncio.Task, Future]:
     try:
         event_loop = (
             asyncio.get_running_loop()

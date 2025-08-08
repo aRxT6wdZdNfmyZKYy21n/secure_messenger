@@ -1,8 +1,6 @@
 import logging
 import typing
 
-import i2plib  # noqa
-
 from PySide6.QtCore import (
     QMimeData
 )
@@ -59,11 +57,9 @@ class ConversationTextEdit(QTextEdit):
         )
 
         images: (
-            typing.Optional[
-                typing.List[
-                    QImage
-                ]
-            ]
+            typing.List[
+                QImage
+            ] | None
         ) = (
             result_raw_data[
                 'images'
@@ -71,9 +67,9 @@ class ConversationTextEdit(QTextEdit):
         )
 
         if images is not None:
-            print(
-                'found images count'
-                f': {len(images)}'
+            logger.debug(
+                'found images count: %s',
+                len(images)
             )
 
             if (
@@ -104,9 +100,9 @@ class ConversationTextEdit(QTextEdit):
         )
 
         if plain_text:
-            print(
-                'plain text'
-                f': {plain_text!r}'
+            logger.debug(
+                'plain text: %r',
+                plain_text
             )
 
             mime_data.setText(

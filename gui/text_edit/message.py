@@ -1,8 +1,6 @@
 import logging
 import typing
 
-import i2plib  # noqa
-
 from PySide6.QtCore import (
     QMimeData,
     Qt
@@ -159,11 +157,9 @@ class MessageTextEdit(QTextEdit):
             )
 
             images: (
-                typing.Optional[
-                    typing.List[
-                        QImage
-                    ]
-                ]
+                typing.List[
+                    QImage
+                ] | None
             ) = (
                 result_raw_data[
                     'images'
@@ -171,9 +167,9 @@ class MessageTextEdit(QTextEdit):
             )
 
             if images is not None:
-                print(
-                    'found images count'
-                    f': {len(images)}'
+                logger.debug(
+                    'found images count: %s',
+                    len(images)
                 )
 
                 for image in (
@@ -190,9 +186,9 @@ class MessageTextEdit(QTextEdit):
             )
 
             if plain_text:
-                print(
-                    'plain text'
-                    f': {plain_text!r}'
+                logger.debug(
+                    'plain text: %r',
+                    plain_text
                 )
 
                 self.insertPlainText(
@@ -206,55 +202,16 @@ class MessageTextEdit(QTextEdit):
                 source.text()
             )
         else:
-            print(
-                'hasColor'
-                f': {source.hasColor()!r}'
-            )
-
-            print(
-                'colorData'
-                f': {source.colorData()!r}'
-            )
-
-            print(
-                'hasHtml'
-                f': {source.hasHtml()!r}'
-            )
-
-            print(
-                'html'
-                f': {source.html()!r}'
-            )
-
-            print(
-                'hasImage'
-                f': {source.hasImage()!r}'
-            )
-
-            print(
-                'imageData'
-                f': {source.imageData()!r}'
-            )
-
-            print(
-                'hasText'
-                f': {source.hasText()!r}'
-            )
-
-            print(
-                'text'
-                f': {source.text()!r}'
-            )
-
-            print(
-                'hasUrls'
-                f': {source.hasUrls()!r}'
-            )
-
-            print(
-                'urls'
-                f': {source.urls()!r}'
-            )
+            logger.debug('hasColor: %r', source.hasColor())
+            logger.debug('colorData: %r', source.colorData())
+            logger.debug('hasHtml: %r', source.hasHtml())
+            logger.debug('html: %r', source.html())
+            logger.debug('hasImage: %r', source.hasImage())
+            logger.debug('imageData: %r', source.imageData())
+            logger.debug('hasText: %r', source.hasText())
+            logger.debug('text: %r', source.text())
+            logger.debug('hasUrls: %r', source.hasUrls())
+            logger.debug('urls: %r', source.urls())
 
     def keyPressEvent(
             self,
@@ -305,9 +262,7 @@ class MessageTextEdit(QTextEdit):
 
             return
 
-        print(
-            'on_message_send_key_pressed_event'
-        )
+        logger.debug('on_message_send_key_pressed_event')
 
         self.__on_message_send_key_pressed_event()
 
@@ -361,10 +316,7 @@ class MessageTextEdit(QTextEdit):
         ):
             return
 
-        print(
-            'new_minimum_height'
-            f': {new_minimum_height}'
-        )
+        logger.debug('new_minimum_height: %s', new_minimum_height)
 
         self.setMinimumHeight(
             new_minimum_height

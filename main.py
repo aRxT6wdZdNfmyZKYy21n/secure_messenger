@@ -87,20 +87,16 @@ async def run_application(
     #   render glyph failed err=9e
     #   QFontEngine: Glyph rendered in unknown pixel_mode=0
 
-    assert (
-        QFontDatabase.addApplicationFont(
-            OsUtils.get_path(
-                './'
-                'data/'
-                'static/'
-                'NotoColorEmoji.ttf'
-            )
-        ) ==
-
-        0
-    ), (
-        'Could not load emoji font'
+    font_id = QFontDatabase.addApplicationFont(
+        OsUtils.get_path(
+            './'
+            'data/'
+            'static/'
+            'NotoColorEmoji.ttf'
+        )
     )
+
+    assert font_id == 0, 'Could not load emoji font'
 
     QFontDatabase.addApplicationEmojiFontFamily(
         # 'NotoColorEmoji-Regular'
@@ -167,7 +163,7 @@ def main() -> None:
         CustomStreamHandler()
     ]
 
-    logging_level: str
+    logging_level: int
 
     if _IS_DEBUG:
         logging_handlers.append(

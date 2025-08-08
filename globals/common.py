@@ -21,15 +21,13 @@ class CommonGlobals(object):
         ).__init__()
 
         self.__asyncio_event_loop: (
-            typing.Optional[
-                asyncio.AbstractEventLoop
-            ]
+            asyncio.AbstractEventLoop | None
         ) = None
 
     def get_asyncio_event_loop(
             self
     ) -> (
-            asyncio.AbstractEventLoop
+            asyncio.AbstractEventLoop | None
     ):
         return (
             self.__asyncio_event_loop

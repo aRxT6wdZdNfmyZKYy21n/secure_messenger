@@ -1,49 +1,35 @@
-import codecs
 import os
 import typing
 
 import orjson
 
 
+T = typing.TypeVar("T")
+
+
 class JsonUtils(object):
     @staticmethod
     def read(
             path: str
-    ) -> None:
-        with (
-                codecs.open(
-                    path,
-                    'r',
-                    'utf-8'
-                )
+    ) -> typing.Any:
+        with open(
+            path,
+            'r',
+            encoding='utf-8'
         ) as json_file:
-            return (
-                orjson.loads(
-                    json_file.read()
-                )
-            )
+            return orjson.loads(json_file.read())
 
     @classmethod
     def read_if_exists(
             cls,
-
             path: str,
-
-            default: (
-                typing.Type
-            )
-    ):
+            default: typing.Callable[[], T]
+    ) -> typing.Union[typing.Any, T]:
         if not (
                 os.path.exists(
                     path
                 )
         ):
-            return (
-                default()
-            )
+            return default()
 
-        return (
-            cls.read(
-                path
-            )
-        )
+        return cls.read(path)

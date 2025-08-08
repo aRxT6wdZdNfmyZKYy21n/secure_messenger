@@ -2,12 +2,10 @@ import typing
 
 
 class Constants(object):
+    # A coroutine function with any args returning any awaitable result
     AsyncFunctionType = (
         typing.Callable[
-            [
-                typing.Any,
-                typing.Any
-            ],
+            ...,  # arbitrary positional/keyword parameters
             typing.Awaitable[
                 typing.Any
             ]

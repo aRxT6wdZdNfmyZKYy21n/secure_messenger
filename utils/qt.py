@@ -98,7 +98,7 @@ class QtUtils(object):
     ) -> str:
         return (
             '<img'
-            f' src="data:image/png;base64, {image_base64_encoded_text}"'
+            f' src="{_HTML_IMAGE_SOURCE_PNG_BASE_64_PREFIX} {image_base64_encoded_text}"'
             ' />'
         )
 
@@ -107,9 +107,7 @@ class QtUtils(object):
             html_text: (
                 str
             )
-    ) -> (
-            typing.Dict
-    ):
+    ) -> typing.Dict[str, typing.Any]:
         parser = (
             etree.HTMLParser(
                 remove_comments=(
@@ -158,11 +156,9 @@ class QtUtils(object):
         )
 
         images: (
-            typing.Optional[
-                typing.List[
-                    QImage
-                ]
-            ]
+            typing.List[
+                QImage
+            ] | None
         ) = None
 
         element: (

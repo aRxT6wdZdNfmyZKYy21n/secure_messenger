@@ -162,9 +162,7 @@ class MainWindow(QMainWindow):
         )
 
         local_i2p_node_destination: (
-            typing.Optional[
-                i2plib.Destination
-            ]
+            i2plib.Destination | None
         )
 
         if local_i2p_node_destination_raw is not None:
@@ -217,9 +215,7 @@ class MainWindow(QMainWindow):
         )
 
         local_i2p_node_sam_ip_address_raw: (
-            typing.Optional[
-                str
-            ]
+            str | None
         ) = (
             config_raw_data.get(
                 'local_i2p_node_sam_ip_address_raw',
@@ -253,9 +249,7 @@ class MainWindow(QMainWindow):
         )
 
         local_i2p_node_sam_port_raw: (
-            typing.Optional[
-                str
-            ]
+            str | None
         ) = (
             config_raw_data.get(
                 'local_i2p_node_sam_port_raw',
@@ -289,9 +283,7 @@ class MainWindow(QMainWindow):
         )
 
         remote_i2p_node_address_raw: (
-            typing.Optional[
-                str
-            ]
+            str | None
         ) = (
             config_raw_data.get(
                 'remote_i2p_node_address_raw'
@@ -698,12 +690,7 @@ class MainWindow(QMainWindow):
         ) = {}
 
         self.__local_i2p_node_sam_ip_address: (
-            typing.Optional[
-                typing.Union[
-                    IPv4Address,
-                    IPv6Address
-                ]
-            ]
+            IPv4Address | IPv6Address | None
         ) = None
 
         self.__local_i2p_node_sam_ip_address_line_edit = (
@@ -711,15 +698,11 @@ class MainWindow(QMainWindow):
         )
 
         self.__local_i2p_node_sam_ip_address_raw: (
-            typing.Optional[
-                str
-            ]
+            str | None
         ) = None
 
         self.__local_i2p_node_sam_port: (
-            typing.Optional[
-                int
-            ]
+            int | None
         ) = None
 
         self.__local_i2p_node_sam_port_line_edit = (
@@ -727,15 +710,11 @@ class MainWindow(QMainWindow):
         )
 
         self.__local_i2p_node_sam_port_raw: (
-            typing.Optional[
-                str
-            ]
+            str | None
         ) = None
 
         self.__local_i2p_node_sam_session_control_connection: (
-            typing.Optional[
-                Connection
-            ]
+            Connection | None
         ) = None
 
         self.__local_i2p_node_sam_session_creation_event = (
@@ -743,9 +722,7 @@ class MainWindow(QMainWindow):
         )
 
         self.__local_i2p_node_sam_session_incoming_data_connection: (
-            typing.Optional[
-                Connection
-            ]
+            Connection | None
         ) = None
 
         self.__local_i2p_node_sam_session_incoming_data_connection_status_key_label = (
@@ -765,9 +742,7 @@ class MainWindow(QMainWindow):
         )
 
         self.__local_i2p_node_sam_session_outgoing_data_connection: (
-            typing.Optional[
-                Connection
-            ]
+            Connection | None
         ) = None
 
         self.__local_i2p_node_sam_session_outgoing_data_connection_status_key_label = (
@@ -811,9 +786,7 @@ class MainWindow(QMainWindow):
         )
 
         self.__remote_i2p_node_address_raw: (
-            typing.Optional[
-                str
-            ]
+            str | None
         ) = None
 
         self.__remote_i2p_node_message_raw_data_by_id_map: (
@@ -1334,9 +1307,7 @@ class MainWindow(QMainWindow):
                 )
 
             raw_data_type: (
-                typing.Optional[
-                    str
-                ]
+                str | None
             ) = (
                 raw_data.pop(
                     'type',
@@ -1361,9 +1332,7 @@ class MainWindow(QMainWindow):
                 )
 
                 message_id: (
-                    typing.Optional[
-                        int
-                    ]
+                    int | None
                 ) = (
                     ack_raw_data.pop(
                         'message_id',
@@ -1416,9 +1385,7 @@ class MainWindow(QMainWindow):
                 )
 
                 message_id: (
-                    typing.Optional[
-                        int
-                    ]
+                    int | None
                 ) = (
                     message_raw_data.pop(
                         'id',
@@ -1468,11 +1435,9 @@ class MainWindow(QMainWindow):
                     continue
 
                 message_image_base64_encoded_text_list: (
-                    typing.Optional[
-                        typing.List[
-                            str
-                        ]
-                    ]
+                    typing.List[
+                        str
+                    ] | None
                 ) = (
                     message_raw_data.pop(
                         'image_base64_encoded_text_list',
@@ -1547,9 +1512,7 @@ class MainWindow(QMainWindow):
                             continue
 
                 message_text: (
-                    typing.Optional[
-                        str
-                    ]
+                    str | None
                 ) = (
                     message_raw_data.pop(
                         'text',
@@ -2114,9 +2077,7 @@ class MainWindow(QMainWindow):
     @staticmethod
     def __get_local_i2p_node_address(
             local_i2p_node_destination: (
-                typing.Optional[
-                    i2plib.Destination
-                ]
+                i2plib.Destination | None
             )
     ) -> str:
         if local_i2p_node_destination is not None:
@@ -2184,12 +2145,7 @@ class MainWindow(QMainWindow):
         self.__save_config()
 
         new_local_i2p_node_sam_ip_address: (
-            typing.Optional[
-                typing.Union[
-                    IPv4Address,
-                    IPv6Address
-                ]
-            ]
+            IPv4Address | IPv6Address | None
         )
 
         try:
@@ -2276,9 +2232,7 @@ class MainWindow(QMainWindow):
         self.__save_config()
 
         new_local_i2p_node_sam_port: (
-            typing.Optional[
-                int
-            ]
+            int | None
         )
 
         if new_local_i2p_node_sam_port_raw.isdigit():
@@ -3051,9 +3005,7 @@ class MainWindow(QMainWindow):
             new_local_i2p_node_sam_session_incoming_data_connection_status_raw: str,
 
             color: (
-                typing.Optional[
-                    str
-                ]
+                str | None
             ) = None
     ) -> None:
         local_i2p_node_sam_session_incoming_data_connection_status_value_label = (
@@ -3102,9 +3054,7 @@ class MainWindow(QMainWindow):
             new_local_i2p_node_sam_session_outgoing_data_connection_status_raw: str,
 
             color: (
-                typing.Optional[
-                    str
-                ]
+                str | None
             ) = None
     ) -> None:
         local_i2p_node_sam_session_outgoing_data_connection_status_value_label = (
@@ -3153,9 +3103,7 @@ class MainWindow(QMainWindow):
             new_local_i2p_node_sam_session_status_raw: str,
 
             color: (
-                typing.Optional[
-                    str
-                ]
+                str | None
             ) = None
     ) -> None:
         local_i2p_node_sam_session_status_value_label = (
@@ -3204,9 +3152,7 @@ class MainWindow(QMainWindow):
             new_remote_i2p_node_status_raw: str,
 
             color: (
-                typing.Optional[
-                    str
-                ]
+                str | None
             ) = None
     ) -> None:
         remote_i2p_node_status_value_label = (

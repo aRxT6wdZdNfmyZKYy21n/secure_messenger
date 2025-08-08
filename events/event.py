@@ -1,9 +1,15 @@
+import logging
 import traceback
 import typing
 import inspect
 
 from common import (
     Constants
+)
+
+
+logger = logging.getLogger(
+    __name__,
 )
 
 
@@ -108,10 +114,10 @@ class Event(object):
                     **kwargs
                 )
             except Exception as exception:
-                print(
-                    'Handled exception while calling event'
-                    f' with name {name!r}'
-                    f': {"".join(traceback.format_exception(exception))}'
+                logger.error(
+                    'Handled exception while calling event with name %r: %s',
+                    name,
+                    "".join(traceback.format_exception(exception))
                 )
 
     def clear(
