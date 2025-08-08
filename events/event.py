@@ -34,7 +34,7 @@ class Event(object):
         )
 
         self.__sync_delegates: (
-            typing.List[
+            list[
                 typing.Callable
             ]
         ) = []

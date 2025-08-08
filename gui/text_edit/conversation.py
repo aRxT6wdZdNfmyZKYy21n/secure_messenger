@@ -1,5 +1,4 @@
 import logging
-import typing
 
 from PySide6.QtCore import (
     QMimeData
@@ -57,7 +56,7 @@ class ConversationTextEdit(QTextEdit):
         )
 
         images: (
-            typing.List[
+            list[
                 QImage
             ] | None
         ) = (

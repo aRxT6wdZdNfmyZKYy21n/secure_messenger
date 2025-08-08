@@ -107,7 +107,7 @@ class QtUtils(object):
             html_text: (
                 str
             )
-    ) -> typing.Dict[str, typing.Any]:
+    ) -> dict[str, typing.Any]:
         parser = (
             etree.HTMLParser(
                 remove_comments=(
@@ -126,7 +126,7 @@ class QtUtils(object):
         )
 
         body_elements: (
-            typing.List[
+            list[
                 etree._Element  # noqa
             ]
         ) = (
@@ -156,7 +156,7 @@ class QtUtils(object):
         )
 
         images: (
-            typing.List[
+            list[
                 QImage
             ] | None
         ) = None

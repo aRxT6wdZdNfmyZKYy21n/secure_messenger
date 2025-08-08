@@ -60,7 +60,7 @@ class Connection(object):
                 _DEFAULT_TIMEOUT
             )
     ) -> (
-            typing.Dict | None
+            dict | None
     ):
         line_bytes_count_bytes = (
             await (
@@ -138,7 +138,7 @@ class Connection(object):
             self,
 
             raw_data: (
-                typing.Dict
+                dict
             )
     ) -> bool:
         raw_data_bytes = (

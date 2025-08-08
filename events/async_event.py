@@ -34,7 +34,7 @@ class AsyncEvent(Event):
         )
 
         self.__async_delegates: (
-            typing.List[
+            list[
                 Constants.AsyncFunctionType
             ]
         ) = []

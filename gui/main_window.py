@@ -144,7 +144,7 @@ class MainWindow(QMainWindow):
         )
 
         config_raw_data: (
-            typing.Dict
+            dict
         ) = (
             JsonUtils.read_if_exists(
                 _CONFIG_FILE_PATH,
@@ -676,16 +676,16 @@ class MainWindow(QMainWindow):
         )
 
         self.__local_i2p_node_message_raw_data_by_id_map: (
-            typing.Dict[
+            dict[
                 int,
-                typing.Dict
+                dict
             ]
         ) = {}
 
         self.__local_i2p_node_pending_message_raw_data_by_id_map: (  # TODO: __local_i2p_node_pending_message_id_set
-            typing.Dict[
+            dict[
                 int,
-                typing.Dict
+                dict
             ]
         ) = {}
 
@@ -790,9 +790,9 @@ class MainWindow(QMainWindow):
         ) = None
 
         self.__remote_i2p_node_message_raw_data_by_id_map: (
-            typing.Dict[
+            dict[
                 int,
-                typing.Dict
+                dict
             ]
         ) = {}
 
@@ -1202,7 +1202,7 @@ class MainWindow(QMainWindow):
             message_id: int,
 
             message_raw_data: (
-                typing.Dict
+                dict
             )
     ) -> None:
         raw_data = (
@@ -1435,7 +1435,7 @@ class MainWindow(QMainWindow):
                     continue
 
                 message_image_base64_encoded_text_list: (
-                    typing.List[
+                    list[
                         str
                     ] | None
                 ) = (
@@ -2315,7 +2315,7 @@ class MainWindow(QMainWindow):
 
         message_image_base64_encoded_text_list: (
             typing.Optional[
-                typing.List[
+                list[
                     str
                 ]
             ]
@@ -2718,7 +2718,7 @@ class MainWindow(QMainWindow):
 
                     conversation_message_image_base64_encoded_text_list: (
                         typing.Optional[
-                            typing.List[
+                            list[
                                 str
                             ]
                         ]

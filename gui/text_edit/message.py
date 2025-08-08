@@ -1,5 +1,4 @@
 import logging
-import typing
 
 from PySide6.QtCore import (
     QMimeData,
@@ -50,7 +49,7 @@ class MessageTextEdit(QTextEdit):
         )
 
         self.__images: (
-            typing.List[
+            list[
                 QImage
             ]
         ) = []
@@ -81,7 +80,7 @@ class MessageTextEdit(QTextEdit):
     def images(
             self
     ) -> (
-            typing.List[
+            list[
                 QImage
             ]
     ):
@@ -157,7 +156,7 @@ class MessageTextEdit(QTextEdit):
             )
 
             images: (
-                typing.List[
+                list[
                     QImage
                 ] | None
             ) = (
