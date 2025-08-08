@@ -8,7 +8,7 @@ import orjson
 
 logger = (
     logging.getLogger(
-        __name__
+        __name__,
     )
 )
 
@@ -21,7 +21,7 @@ _DEFAULT_TIMEOUT = (
 class Connection(object):
     __slots__ = (
         '__reader',
-        '__writer'
+        '__writer',
     )
 
     def __init__(
@@ -49,7 +49,7 @@ class Connection(object):
         )
 
     def close(
-            self
+            self,
     ) -> None:
         self.__writer.close()
 
@@ -58,7 +58,7 @@ class Connection(object):
 
             timeout = (
                 _DEFAULT_TIMEOUT
-            )
+            ),
     ) -> (
             dict | None
     ):
@@ -71,7 +71,7 @@ class Connection(object):
 
                     timeout=(
                         timeout
-                    )
+                    ),
                 )
             )
         )
@@ -82,14 +82,14 @@ class Connection(object):
         line_bytes_count = (
             struct.unpack(
                 '!I',
-                line_bytes_count_bytes
+                line_bytes_count_bytes,
             )[
                 0
             ]
         )
 
         logger.info(
-            f'Reading {line_bytes_count} bytes...'
+            f'Reading {line_bytes_count} bytes...',
         )
 
         line_bytes = (
@@ -101,7 +101,7 @@ class Connection(object):
 
                     timeout=(
                         timeout
-                    )
+                    ),
                 )
             )
         )
@@ -115,19 +115,19 @@ class Connection(object):
 
         raw_data = (
             orjson.loads(
-                line
+                line,
             )
         )
 
         logging_raw_data = (
             self.__get_trimmed_data(
-                raw_data
+                raw_data,
             )
         )
 
         logger.info(
             'Received raw_data'
-            f': {logging_raw_data}'
+            f': {logging_raw_data}',
         )
 
         return (
@@ -139,24 +139,24 @@ class Connection(object):
 
             raw_data: (
                 dict
-            )
+            ),
     ) -> bool:
         raw_data_bytes = (
             orjson.dumps(
-                raw_data
+                raw_data,
             )
         )
 
         raw_data_bytes_count = (
             len(
-                raw_data_bytes
+                raw_data_bytes,
             )
         )
 
         raw_data_bytes_count_bytes = (
             struct.pack(
                 '!I',
-                raw_data_bytes_count
+                raw_data_bytes_count,
             )
         )
 
@@ -165,22 +165,22 @@ class Connection(object):
         )
 
         writer.write(
-            raw_data_bytes_count_bytes
+            raw_data_bytes_count_bytes,
         )
 
         writer.write(
-            raw_data_bytes
+            raw_data_bytes,
         )
 
         logging_raw_data = (
             self.__get_trimmed_data(
-                raw_data
+                raw_data,
             )
         )
 
         logger.info(
             'Sent raw data'
-            f': {logging_raw_data}'
+            f': {logging_raw_data}',
         )
 
         return True
@@ -191,13 +191,13 @@ class Connection(object):
 
             data: (
                 typing.Any
-            )
+            ),
     ) -> (
             typing.Any
     ):
         data_type = (
             type(
-                data
+                data,
             )
         )
 
@@ -227,8 +227,8 @@ class Connection(object):
                 list(
                     map(
                         cls.__get_trimmed_data,
-                        data
-                    )
+                        data,
+                    ),
                 )
             )
         elif (
@@ -238,7 +238,7 @@ class Connection(object):
             return {
                 key: (
                     cls.__get_trimmed_data(
-                        value
+                        value,
                     )
                 )
 
@@ -258,7 +258,7 @@ class Connection(object):
 
             timeout = (
                 _DEFAULT_TIMEOUT
-            )
+            ),
     ) -> (
             bytes | None
     ):
@@ -276,19 +276,19 @@ class Connection(object):
 
                         timeout=(
                             timeout
-                        )
+                        ),
                     )
                 )
             )
         except asyncio.exceptions.IncompleteReadError:
             logger.warning(
-                'IncompleteReadError'
+                'IncompleteReadError',
             )
 
             return None
         except asyncio.TimeoutError:
             logger.warning(
-                'Timeout'
+                'Timeout',
             )
 
             return None

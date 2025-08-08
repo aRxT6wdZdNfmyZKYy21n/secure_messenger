@@ -4,7 +4,7 @@ import typing
 import inspect
 
 from common import (
-    Constants
+    Constants,
 )
 
 
@@ -53,7 +53,7 @@ class Event(object):
     ):
         delegates = (
             self._get_container(
-                delegate
+                delegate,
             )
         )
 
@@ -62,7 +62,7 @@ class Event(object):
                 delegates
         ):
             delegates.append(
-                delegate
+                delegate,
             )
 
         return self
@@ -81,7 +81,7 @@ class Event(object):
     ):
         delegates = (
             self._get_container(
-                delegate
+                delegate,
             )
         )
 
@@ -90,7 +90,7 @@ class Event(object):
                 delegates
         ):
             delegates.remove(
-                delegate
+                delegate,
             )
 
         return self
@@ -111,13 +111,13 @@ class Event(object):
             try:
                 delegate(
                     *args,
-                    **kwargs
+                    **kwargs,
                 )
             except Exception as exception:
                 logger.error(
                     'Handled exception while calling event with name %r: %s',
                     name,
-                    "".join(traceback.format_exception(exception))
+                    "".join(traceback.format_exception(exception)),
                 )
 
     def clear(
@@ -144,7 +144,7 @@ class Event(object):
     ):
         if (
                 inspect.iscoroutinefunction(
-                    delegate
+                    delegate,
                 )
         ):
             raise (

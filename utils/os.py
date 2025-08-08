@@ -7,11 +7,11 @@ class OsUtils(object):
 
     @staticmethod
     def get_path(
-            path: str
+            path: str,
     ) -> str:
         pyi_application_home_directory_path = (
             os.getenv(
-                '_PYI_APPLICATION_HOME_DIR'
+                '_PYI_APPLICATION_HOME_DIR',
             )
         )
 
@@ -19,7 +19,7 @@ class OsUtils(object):
             path = (
                 os.path.join(
                     pyi_application_home_directory_path,
-                    path
+                    path,
                 )
             )
 

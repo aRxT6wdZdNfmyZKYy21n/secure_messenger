@@ -14,13 +14,13 @@ class TimeUtils(object):
             datetime.now(
                 tz=(
                     timezone.utc
-                )
+                ),
             )
         )
 
     @classmethod
     def get_aware_current_timestamp_ms(
-            cls
+            cls,
     ) -> int:
         aware_current_datetime = (
             cls.get_aware_current_datetime()
@@ -29,6 +29,6 @@ class TimeUtils(object):
         return (
             int(
                 aware_current_datetime.timestamp() *
-                1000.
+                1000.,
             )
         )

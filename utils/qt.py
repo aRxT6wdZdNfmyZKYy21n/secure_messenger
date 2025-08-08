@@ -33,7 +33,7 @@ _HTML_IMAGE_SOURCE_PNG_BASE_64_PREFIX = (
 
 logger = (
     logging.getLogger(
-        __name__
+        __name__,
     )
 )
 
@@ -45,16 +45,16 @@ class QtUtils(object):
 
             alignment=(
                 Qt.AlignmentFlag.AlignCenter
-            )
+            ),
     ) -> QLabel:
         label = (
             QLabel(
-                label_text
+                label_text,
             )
         )
 
         label.setAlignment(
-            alignment
+            alignment,
         )
 
         label.adjustSize()
@@ -68,7 +68,7 @@ class QtUtils(object):
     def get_image_base64_encoded_text(
             image: (
                 QImage
-            )
+            ),
     ) -> str:
         image_buffer = (
             QBuffer()
@@ -79,12 +79,12 @@ class QtUtils(object):
 
             format=(
                 b'png'
-            )
+            ),
         )
 
         return (
             b64encode(
-                image_buffer.data().data()
+                image_buffer.data().data(),
             ).decode()
         )
 
@@ -94,7 +94,7 @@ class QtUtils(object):
 
             image_base64_encoded_text: (
                 str
-            )
+            ),
     ) -> str:
         return (
             '<img'
@@ -106,13 +106,13 @@ class QtUtils(object):
     def parse_html(
             html_text: (
                 str
-            )
+            ),
     ) -> dict[str, typing.Any]:
         parser = (
             etree.HTMLParser(
                 remove_comments=(
                     True
-                )
+                ),
             )
         )
 
@@ -121,7 +121,7 @@ class QtUtils(object):
         ) = (
             etree.fromstring(
                 html_text,
-                parser
+                parser,
             )
         )
 
@@ -132,14 +132,14 @@ class QtUtils(object):
         ) = (
             list(
                 root.iterchildren(
-                    tag='body'
+                    tag='body',
                 )
             )
         )
 
         assert (
             len(
-                body_elements
+                body_elements,
             ) ==
 
             1
@@ -174,7 +174,7 @@ class QtUtils(object):
             ):
                 image_source: str = (
                     element.attrib.get(
-                        'src'
+                        'src',
                     )
                 )
 
@@ -183,12 +183,12 @@ class QtUtils(object):
 
                 if (
                         image_source.startswith(
-                            _HTML_IMAGE_SOURCE_PNG_BASE_64_PREFIX
+                            _HTML_IMAGE_SOURCE_PNG_BASE_64_PREFIX,
                         )
                 ):
                     image_base64_encoded_text = (
                         image_source.removeprefix(
-                            _HTML_IMAGE_SOURCE_PNG_BASE_64_PREFIX
+                            _HTML_IMAGE_SOURCE_PNG_BASE_64_PREFIX,
                         ).lstrip()
                     )
 
@@ -202,17 +202,17 @@ class QtUtils(object):
                     if not (
                             image.loadFromData(
                                 b64decode(
-                                    image_base64_encoded_text
+                                    image_base64_encoded_text,
                                 ),
 
                                 format=(
                                     b'png'
-                                )
+                                ),
                             )
                     ):
                         logger.warning(
                             'Could not load image'
-                            f' with Base64-encoded text {image_base64_encoded_text!r}'
+                            f' with Base64-encoded text {image_base64_encoded_text!r}',
                         )
 
                         continue
@@ -221,13 +221,13 @@ class QtUtils(object):
                         images = []
 
                     images.append(
-                        image
+                        image,
                     )
                 else:
                     logger.warning(
                         'Image'
                         f' with source {image_source!r}'
-                        ' is not supported'
+                        ' is not supported',
                     )
 
                 continue
@@ -238,11 +238,11 @@ class QtUtils(object):
 
             if element_text:
                 plain_text_io.write(
-                    element_text
+                    element_text,
                 )
 
         plain_text_io.seek(
-            0
+            0,
         )
 
         plain_text = (
@@ -256,5 +256,5 @@ class QtUtils(object):
 
             'plain_text': (
                 plain_text
-            )
+            ),
         }

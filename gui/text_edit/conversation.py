@@ -1,25 +1,25 @@
 import logging
 
 from PySide6.QtCore import (
-    QMimeData
+    QMimeData,
 )
 
 from PySide6.QtGui import (
-    QImage
+    QImage,
 )
 
 from PySide6.QtWidgets import (
-    QTextEdit
+    QTextEdit,
 )
 
 from utils.qt import (
-    QtUtils
+    QtUtils,
 )
 
 
 logger = (
     logging.getLogger(
-        __name__
+        __name__,
     )
 )
 
@@ -51,7 +51,7 @@ class ConversationTextEdit(QTextEdit):
 
         result_raw_data = (
             QtUtils.parse_html(
-                html_text
+                html_text,
             )
         )
 
@@ -68,7 +68,7 @@ class ConversationTextEdit(QTextEdit):
         if images is not None:
             logger.debug(
                 'found images count: %s',
-                len(images)
+                len(images),
             )
 
             if (
@@ -79,7 +79,7 @@ class ConversationTextEdit(QTextEdit):
                     1
             ):
                 logger.warning(
-                    'Could not set more than one image into QMimeData'
+                    'Could not set more than one image into QMimeData',
                 )
 
             image = (
@@ -89,7 +89,7 @@ class ConversationTextEdit(QTextEdit):
             )
 
             mime_data.setImageData(
-                image
+                image,
             )
 
         plain_text: str = (
@@ -101,11 +101,11 @@ class ConversationTextEdit(QTextEdit):
         if plain_text:
             logger.debug(
                 'plain text: %r',
-                plain_text
+                plain_text,
             )
 
             mime_data.setText(
-                plain_text
+                plain_text,
             )
 
         return (

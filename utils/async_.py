@@ -14,7 +14,7 @@ logger = logging.getLogger(
 )
 
 async def log_exceptions(
-        awaitable: typing.Awaitable[T]
+        awaitable: typing.Awaitable[T],
 ) -> T:
     if awaitable is None:
         raise ValueError("awaitable must not be None")
@@ -35,7 +35,7 @@ async def log_exceptions(
 
 def create_task_with_exceptions_logging(
         coroutine: typing.Coroutine[typing.Any, typing.Any, T],
-        name: str | None = None
+        name: str | None = None,
 ) -> asyncio.Task:
     return (
         asyncio.create_task(
@@ -52,22 +52,22 @@ def create_task_with_exceptions_logging(
 
 def run_coroutine_threadsafe_with_exceptions_logging(
         coroutine: typing.Coroutine[typing.Any, typing.Any, T],
-        event_loop: asyncio.AbstractEventLoop
+        event_loop: asyncio.AbstractEventLoop,
 ) -> Future:
     return (
         asyncio.run_coroutine_threadsafe(
             log_exceptions(
-                coroutine
+                coroutine,
             ),
 
-            event_loop
+            event_loop,
         )
     )
 
 
 def create_task_with_exceptions_logging_threadsafe(
         coroutine: typing.Coroutine[typing.Any, typing.Any, T],
-        name: str | None = None
+        name: str | None = None,
 ) -> typing.Union[asyncio.Task, Future]:
     try:
         event_loop = (
@@ -99,13 +99,13 @@ def create_task_with_exceptions_logging_threadsafe(
         return (
             create_task_with_exceptions_logging(
                 coroutine,
-                name
+                name,
             )
         )
 
     return (
         run_coroutine_threadsafe_with_exceptions_logging(
             coroutine,
-            global_event_loop
+            global_event_loop,
         )
     )

@@ -1,5 +1,4 @@
 import asyncio
-import typing
 
 
 __all__ = (

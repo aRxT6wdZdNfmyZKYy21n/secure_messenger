@@ -22,7 +22,7 @@ class CustomStreamHandler(logging.StreamHandler):
             logging.StreamHandler(
                 stream=(
                     sys.stderr
-                )
+                ),
             )
         )
 
@@ -30,7 +30,7 @@ class CustomStreamHandler(logging.StreamHandler):
             logging.StreamHandler(
                 stream=(
                     sys.stdout
-                )
+                ),
             )
         )
 
@@ -73,13 +73,13 @@ class CustomStreamHandler(logging.StreamHandler):
             )
 
         stream_handler.emit(
-            record
+            record,
         )
 
     def setStream(
             self,
 
-            stream
+            stream,
     ):
         raise (
             NotImplementedError

@@ -41,7 +41,7 @@ from utils.os import (
 _IS_DEBUG_RAW = (
     os.getenv(
         'IS_DEBUG',
-        'false'
+        'false',
     )
 )
 
@@ -64,14 +64,14 @@ elif (
 else:
     raise (
         ValueError(
-            _IS_DEBUG_RAW
+            _IS_DEBUG_RAW,
         )
     )
 
 
 logger = (
     logging.getLogger(
-        __name__
+        __name__,
     )
 )
 
@@ -79,7 +79,7 @@ logger = (
 async def run_application(
         application: (
             QApplication
-        )
+        ),
 ) -> None:
     # Set up application fonts
 
@@ -92,7 +92,7 @@ async def run_application(
             './'
             'data/'
             'static/'
-            'NotoColorEmoji.ttf'
+            'NotoColorEmoji.ttf',
         )
     )
 
@@ -100,7 +100,7 @@ async def run_application(
 
     QFontDatabase.addApplicationEmojiFontFamily(
         # 'NotoColorEmoji-Regular'
-        'Noto Color Emoji'
+        'Noto Color Emoji',
     )
 
     # Set up events
@@ -110,7 +110,7 @@ async def run_application(
     )
 
     application.aboutToQuit.connect(  # noqa
-        application_close_event.set
+        application_close_event.set,
     )
 
     window = (
@@ -122,7 +122,7 @@ async def run_application(
     # Step 1: create destination if needed
 
     asyncio.create_task(
-        window.update_local_i2p_node_destination()
+        window.update_local_i2p_node_destination(),
     )
 
     # application.exec()
@@ -136,7 +136,7 @@ async def run_application(
             window.start_local_i2p_node_sam_session_incoming_data_connection_creation_loop(),
             window.start_local_i2p_node_sam_session_outgoing_data_connection_creation_loop(),
             window.start_remote_i2p_node_status_update_loop(),
-            application_close_event.wait()
+            application_close_event.wait(),
         )
     )
 
@@ -168,11 +168,11 @@ def main() -> None:
     if _IS_DEBUG:
         logging_handlers.append(
             logging.FileHandler(
-                f'log.log',
+                'log.log',
 
                 encoding=(
                     'utf-8'
-                )
+                ),
             )
         )
 
@@ -202,44 +202,44 @@ def main() -> None:
 
         level=(
             logging_level
-        )
+        ),
     )
 
     # create PyQt6 application
 
     application = (
         QApplication(
-            sys.argv
+            sys.argv,
         )
     )
 
     py_qt_event_loop = (
         QEventLoop(
-            application
+            application,
         )
     )
 
     # py_qt_event_loop.set_debug(
-    #     True
+    #     True,
     # )
 
     asyncio.set_event_loop(
-        py_qt_event_loop
+        py_qt_event_loop,
     )
 
     g_common_globals.init_asyncio_event_loop(
-        py_qt_event_loop
+        py_qt_event_loop,
     )
 
     py_qt_event_loop.run_until_complete(
         run_application(
-            application
+            application,
         )
     )
 
     # asyncio.run(
     #     run_application(
-    #         application
+    #         application,
     #     )
     # )
 

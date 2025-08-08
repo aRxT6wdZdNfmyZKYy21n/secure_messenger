@@ -2,30 +2,30 @@ import logging
 
 from PySide6.QtCore import (
     QMimeData,
-    Qt
+    Qt,
 )
 
 from PySide6.QtGui import (
     QImage,
-    QKeyEvent
+    QKeyEvent,
 )
 
 from PySide6.QtWidgets import (
-    QTextEdit
+    QTextEdit,
 )
 
 from events.async_event import (
-    AsyncEvent
+    AsyncEvent,
 )
 
 from utils.qt import (
-    QtUtils
+    QtUtils,
 )
 
 
 logger = (
     logging.getLogger(
-        __name__
+        __name__,
     )
 )
 
@@ -45,7 +45,7 @@ class MessageTextEdit(QTextEdit):
         ).__init__()
 
         self.document().contentsChanged.connect(  # noqa
-            self.__update_height
+            self.__update_height,
         )
 
         self.__images: (
@@ -56,7 +56,7 @@ class MessageTextEdit(QTextEdit):
 
         self.__on_message_send_key_pressed_event = (
             AsyncEvent(
-                'OnMessageSendKeyPressedEvent'
+                'OnMessageSendKeyPressedEvent',
             )
         )
 
@@ -103,7 +103,7 @@ class MessageTextEdit(QTextEdit):
             ) = source.imageData()
 
             self.__add_image(
-                image
+                image,
             )
         elif (
                 source.hasUrls()
@@ -129,18 +129,18 @@ class MessageTextEdit(QTextEdit):
 
                 if not (
                         image.load(
-                            url.path()
+                            url.path(),
                         )
                 ):
                     logger.warning(
                         'Could not load image by URL'
-                        f': {url}'
+                        f': {url}',
                     )
 
                     continue
 
                 self.__add_image(
-                    image
+                    image,
                 )
         elif (
                 source.hasHtml()
@@ -151,7 +151,7 @@ class MessageTextEdit(QTextEdit):
 
             result_raw_data = (
                 QtUtils.parse_html(
-                    html_text
+                    html_text,
                 )
             )
 
@@ -168,14 +168,14 @@ class MessageTextEdit(QTextEdit):
             if images is not None:
                 logger.debug(
                     'found images count: %s',
-                    len(images)
+                    len(images),
                 )
 
                 for image in (
                         images
                 ):
                     self.__add_image(
-                        image
+                        image,
                     )
 
             plain_text: str = (
@@ -187,30 +187,30 @@ class MessageTextEdit(QTextEdit):
             if plain_text:
                 logger.debug(
                     'plain text: %r',
-                    plain_text
+                    plain_text,
                 )
 
                 self.insertPlainText(
-                    plain_text
+                    plain_text,
                 )
 
         elif (
                 source.hasText()
         ):
             self.insertPlainText(
-                source.text()
+                source.text(),
             )
         else:
-            logger.debug('hasColor: %r', source.hasColor())
-            logger.debug('colorData: %r', source.colorData())
-            logger.debug('hasHtml: %r', source.hasHtml())
-            logger.debug('html: %r', source.html())
-            logger.debug('hasImage: %r', source.hasImage())
-            logger.debug('imageData: %r', source.imageData())
-            logger.debug('hasText: %r', source.hasText())
-            logger.debug('text: %r', source.text())
-            logger.debug('hasUrls: %r', source.hasUrls())
-            logger.debug('urls: %r', source.urls())
+            logger.debug('hasColor: %r', source.hasColor(),)
+            logger.debug('colorData: %r', source.colorData(),)
+            logger.debug('hasHtml: %r', source.hasHtml(),)
+            logger.debug('html: %r', source.html(),)
+            logger.debug('hasImage: %r', source.hasImage(),)
+            logger.debug('imageData: %r', source.imageData(),)
+            logger.debug('hasText: %r', source.hasText(),)
+            logger.debug('text: %r', source.text(),)
+            logger.debug('hasUrls: %r', source.hasUrls(),)
+            logger.debug('urls: %r', source.urls(),)
 
     def keyPressEvent(
             self,
@@ -256,12 +256,12 @@ class MessageTextEdit(QTextEdit):
                 MessageTextEdit,
                 self
             ).keyPressEvent(
-                event
+                event,
             )
 
             return
 
-        logger.debug('on_message_send_key_pressed_event')
+        logger.debug('on_message_send_key_pressed_event',)
 
         self.__on_message_send_key_pressed_event()
 
@@ -273,19 +273,19 @@ class MessageTextEdit(QTextEdit):
             )
     ) -> None:
         self.__images.append(
-            image
+            image,
         )
 
         self.insertHtml(
             QtUtils.get_image_html_text(
                 QtUtils.get_image_base64_encoded_text(
-                    image
-                )
-            )
+                    image,
+                ),
+            ),
         )
 
         self.insertPlainText(
-            '\n'
+            '\n',
         )
 
     def __update_height(
@@ -298,10 +298,10 @@ class MessageTextEdit(QTextEdit):
                         self.document().size().height()
                     ),
 
-                    25
+                    25,
                 ),
 
-                500
+                500,
             )
         )
 
@@ -315,8 +315,8 @@ class MessageTextEdit(QTextEdit):
         ):
             return
 
-        logger.debug('new_minimum_height: %s', new_minimum_height)
+        logger.debug('new_minimum_height: %s', new_minimum_height,)
 
         self.setMinimumHeight(
-            new_minimum_height
+            new_minimum_height,
         )

@@ -3,15 +3,15 @@ import inspect
 import typing
 
 from common import (
-    Constants
+    Constants,
 )
 
 from events.event import (
-    Event
+    Event,
 )
 
 from utils.async_ import (
-    create_task_with_exceptions_logging_threadsafe
+    create_task_with_exceptions_logging_threadsafe,
 )
 
 
@@ -56,8 +56,8 @@ class AsyncEvent(Event):
         create_task_with_exceptions_logging_threadsafe(
             self.__call_event_via_gather(
                 *args,
-                **kwargs
-            )
+                **kwargs,
+            ),
         )
 
         """ 3rd way - call event handlers when execution handle will be freed """
@@ -68,10 +68,10 @@ class AsyncEvent(Event):
             create_task_with_exceptions_logging_threadsafe(
                 delegate(
                     *args,
-                    **kwargs
+                    **kwargs,
                 ),
 
-                name
+                name,
             )
         """
 
@@ -97,7 +97,7 @@ class AsyncEvent(Event):
     ):
         if (
                 inspect.iscoroutinefunction(
-                    delegate
+                    delegate,
                 )
         ):
             return (
@@ -109,7 +109,7 @@ class AsyncEvent(Event):
                 AsyncEvent,
                 self
             )._get_container(
-                delegate
+                delegate,
             )
         )
 
@@ -126,7 +126,7 @@ class AsyncEvent(Event):
                 *(
                     delegate(
                         *args,
-                        **kwargs
+                        **kwargs,
                     )
 
                     for delegate in (
@@ -153,7 +153,7 @@ class AsyncEvent(Event):
                 task_group.create_task(
                     delegate(
                         *args,
-                        **kwargs
-                    )
+                        **kwargs,
+                    ),
                 )
     """

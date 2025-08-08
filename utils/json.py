@@ -10,7 +10,7 @@ T = typing.TypeVar("T")
 class JsonUtils(object):
     @staticmethod
     def read(
-            path: str
+            path: str,
     ) -> typing.Any:
         with open(
             path,
@@ -23,13 +23,13 @@ class JsonUtils(object):
     def read_if_exists(
             cls,
             path: str,
-            default: typing.Callable[[], T]
+            default: typing.Callable[[], T],
     ) -> typing.Union[typing.Any, T]:
         if not (
                 os.path.exists(
-                    path
+                    path,
                 )
         ):
             return default()
 
-        return cls.read(path)
+        return cls.read(path,)
