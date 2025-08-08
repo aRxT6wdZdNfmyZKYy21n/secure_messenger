@@ -2,13 +2,23 @@ import logging
 import io
 import typing
 
-from base64 import b64decode, b64encode
+from base64 import (
+    b64decode,
+    b64encode,
+)
 
-from lxml import etree
+from lxml import (
+    etree,
+)
 
-from PySide6.QtCore import QBuffer, Qt
+from PySide6.QtCore import (
+    QBuffer,
+    Qt,
+)
 
-from PySide6.QtGui import QImage
+from PySide6.QtGui import (
+    QImage,
+)
 
 from PySide6.QtWidgets import (
     # QComboBox,
@@ -28,7 +38,7 @@ class QtUtils(object):
     @staticmethod
     def create_label(
         label_text: str,
-        alignment=(Qt.AlignmentFlag.AlignCenter),
+        alignment=Qt.AlignmentFlag.AlignCenter,
     ) -> QLabel:
         label = QLabel(
             label_text,
@@ -44,13 +54,13 @@ class QtUtils(object):
 
     @staticmethod
     def get_image_base64_encoded_text(
-        image: (QImage),
+        image: QImage,
     ) -> str:
         image_buffer = QBuffer()
 
         image.save(
             image_buffer,
-            format=(b'png'),
+            format=b'png',
         )
 
         return b64encode(
@@ -60,7 +70,7 @@ class QtUtils(object):
     @classmethod
     def get_image_html_text(
         cls,
-        image_base64_encoded_text: (str),
+        image_base64_encoded_text: str,
     ) -> str:
         return (
             '<img'
@@ -70,10 +80,10 @@ class QtUtils(object):
 
     @staticmethod
     def parse_html(
-        html_text: (str),
+        html_text: str,
     ) -> dict[str, typing.Any]:
         parser = etree.HTMLParser(
-            remove_comments=(True),
+            remove_comments=True,
         )
 
         root: (
@@ -134,7 +144,7 @@ class QtUtils(object):
                             b64decode(
                                 image_base64_encoded_text,
                             ),
-                            format=(b'png'),
+                            format=b'png',
                         )
                     ):
                         logger.warning(
@@ -171,6 +181,6 @@ class QtUtils(object):
         plain_text = plain_text_io.read()
 
         return {
-            'images': (images),
-            'plain_text': (plain_text),
+            'images': images,
+            'plain_text': plain_text,
         }

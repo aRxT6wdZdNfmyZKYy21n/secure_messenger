@@ -5,21 +5,37 @@ import sys
 
 import i2plib  # noqa
 
-from PySide6.QtGui import QFontDatabase
+from PySide6.QtGui import (
+    QFontDatabase,
+)
 
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import (
+    QApplication,
+)
 
-from qasync import QEventLoop
+from qasync import (
+    QEventLoop,
+)
 
-from common import Constants
+from common import (
+    Constants,
+)
 
-from globals.common import g_common_globals
+from globals.common import (
+    g_common_globals,
+)
 
-from gui.main_window import MainWindow
+from gui.main_window import (
+    MainWindow,
+)
 
-from helpers.custom_stream_handler import CustomStreamHandler
+from helpers.custom_stream_handler import (
+    CustomStreamHandler,
+)
 
-from utils.os import OsUtils
+from utils.os import (
+    OsUtils,
+)
 
 
 _IS_DEBUG_RAW = os.getenv(
@@ -47,7 +63,7 @@ logger = logging.getLogger(
 
 
 async def run_application(
-    application: (QApplication),
+    application: QApplication,
 ) -> None:
     # Set up application fonts
 
@@ -118,7 +134,7 @@ def main() -> None:
         logging_handlers.append(
             logging.FileHandler(
                 'log.log',
-                encoding=('utf-8'),
+                encoding='utf-8',
             )
         )
 
@@ -127,10 +143,10 @@ def main() -> None:
         logging_level = logging.INFO
 
     logging.basicConfig(
-        encoding=('utf-8'),
-        format=('[%(levelname)s][%(asctime)s][%(name)s]: %(message)s'),
-        handlers=(logging_handlers),
-        level=(logging_level),
+        encoding='utf-8',
+        format='[%(levelname)s][%(asctime)s][%(name)s]: %(message)s',
+        handlers=logging_handlers,
+        level=logging_level,
     )
 
     # create PyQt6 application

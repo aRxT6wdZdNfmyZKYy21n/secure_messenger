@@ -82,7 +82,7 @@ class Event(object):
         if inspect.iscoroutinefunction(
             delegate,
         ):
-            raise (NotImplementedError)
+            raise NotImplementedError
 
         return self.__sync_delegates
 

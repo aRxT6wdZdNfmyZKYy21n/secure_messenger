@@ -15,7 +15,7 @@ class CommonGlobals(object):
     def get_asyncio_event_loop(self) -> asyncio.AbstractEventLoop | None:
         return self.__asyncio_event_loop
 
-    def init_asyncio_event_loop(self, value: (asyncio.AbstractEventLoop)) -> None:
+    def init_asyncio_event_loop(self, value: asyncio.AbstractEventLoop) -> None:
         asyncio_event_loop = self.__asyncio_event_loop
 
         assert asyncio_event_loop is None, asyncio_event_loop

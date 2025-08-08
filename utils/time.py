@@ -1,4 +1,7 @@
-from datetime import datetime, timezone
+from datetime import (
+    datetime,
+    timezone,
+)
 
 
 class TimeUtils(object):
@@ -7,7 +10,7 @@ class TimeUtils(object):
     @staticmethod
     def get_aware_current_datetime() -> datetime:
         return datetime.now(
-            tz=(timezone.utc),
+            tz=timezone.utc,
         )
 
     @classmethod

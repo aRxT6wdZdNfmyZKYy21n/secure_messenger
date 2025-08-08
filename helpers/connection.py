@@ -22,8 +22,8 @@ class Connection(object):
 
     def __init__(
         self,
-        reader: (asyncio.StreamReader),
-        writer: (asyncio.StreamWriter),
+        reader: asyncio.StreamReader,
+        writer: asyncio.StreamWriter,
     ) -> None:
         super(Connection, self).__init__()
 
@@ -38,11 +38,11 @@ class Connection(object):
 
     async def read_raw_data(
         self,
-        timeout=(_DEFAULT_TIMEOUT),
+        timeout=_DEFAULT_TIMEOUT,
     ) -> dict | None:
         line_bytes_count_bytes = await self.__read_exactly(
-            bytes_count=(4),
-            timeout=(timeout),
+            bytes_count=4,
+            timeout=timeout,
         )
 
         if line_bytes_count_bytes is None:
@@ -58,8 +58,8 @@ class Connection(object):
         )
 
         line_bytes = await self.__read_exactly(
-            bytes_count=(line_bytes_count),
-            timeout=(timeout),
+            bytes_count=line_bytes_count,
+            timeout=timeout,
         )
 
         if line_bytes is None:
@@ -83,7 +83,7 @@ class Connection(object):
 
     def send_raw_data(
         self,
-        raw_data: (dict),
+        raw_data: dict,
     ) -> bool:
         raw_data_bytes = orjson.dumps(
             raw_data,
@@ -121,7 +121,7 @@ class Connection(object):
     @classmethod
     def __get_trimmed_data(
         cls,
-        data: (typing.Any),
+        data: typing.Any,
     ) -> typing.Any:
         data_type = type(
             data,
@@ -152,14 +152,16 @@ class Connection(object):
     async def __read_exactly(
         self,
         bytes_count: int,
-        timeout=(_DEFAULT_TIMEOUT),
+        timeout=_DEFAULT_TIMEOUT,
     ) -> bytes | None:
         reader = self.__reader
 
         try:
             data_bytes = await asyncio.wait_for(
-                reader.readexactly(bytes_count),
-                timeout=(timeout),
+                reader.readexactly(
+                    bytes_count,
+                ),
+                timeout=timeout,
             )
         except asyncio.exceptions.IncompleteReadError:
             logger.warning(
@@ -174,6 +176,11 @@ class Connection(object):
 
             return None
 
-        assert len(data_bytes) == bytes_count, data_bytes
+        assert (
+            len(
+                data_bytes,
+            )
+            == bytes_count
+        ), data_bytes
 
         return data_bytes

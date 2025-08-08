@@ -10,18 +10,22 @@ class CustomStreamHandler(logging.StreamHandler):
 
     terminator = '\n'
 
-    def __init__(self):
+    def __init__(
+        self,
+    ) -> None:
         super(CustomStreamHandler, self).__init__()
 
         self.__stderr_stream_handler = logging.StreamHandler(
-            stream=(sys.stderr),
+            stream=sys.stderr,
         )
 
         self.__stdout_stream_handler = logging.StreamHandler(
-            stream=(sys.stdout),
+            stream=sys.stdout,
         )
 
-    def flush(self) -> None:
+    def flush(
+        self,
+    ) -> None:
         self.acquire()
 
         try:
@@ -30,7 +34,10 @@ class CustomStreamHandler(logging.StreamHandler):
         finally:
             self.release()
 
-    def emit(self, record: (logging.LogRecord)):
+    def emit(
+        self,
+        record: logging.LogRecord,
+    ):
         level_number = record.levelno
 
         stream_handler: logging.StreamHandler
@@ -48,7 +55,7 @@ class CustomStreamHandler(logging.StreamHandler):
         self,
         stream,
     ):
-        raise (NotImplementedError)
+        raise NotImplementedError
 
     def __repr__(self) -> str:
         return f'[{self.__class__.__name__}]'

@@ -60,7 +60,7 @@ class MessageTextEdit(QTextEdit):
     def images(self) -> list[QImage]:
         return self.__images
 
-    def insertFromMimeData(self, source: (QMimeData)) -> None:
+    def insertFromMimeData(self, source: QMimeData) -> None:
         if source.hasImage():
             image: QImage = source.imageData()
 
@@ -170,7 +170,7 @@ class MessageTextEdit(QTextEdit):
                 source.urls(),
             )
 
-    def keyPressEvent(self, event: (QKeyEvent)) -> None:
+    def keyPressEvent(self, event: QKeyEvent) -> None:
         key = event.key()
 
         if key not in (Qt.Key.Key_Enter, Qt.Key.Key_Return):
@@ -196,7 +196,7 @@ class MessageTextEdit(QTextEdit):
 
         self.__on_message_send_key_pressed_event()
 
-    def __add_image(self, image: (QImage)) -> None:
+    def __add_image(self, image: QImage) -> None:
         self.__images.append(
             image,
         )

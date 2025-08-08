@@ -13,7 +13,9 @@ class JsonUtils(object):
         path: str,
     ) -> typing.Any:
         with open(path, 'r', encoding='utf-8') as json_file:
-            return orjson.loads(json_file.read())
+            return orjson.loads(
+                json_file.read(),
+            )
 
     @classmethod
     def read_if_exists(

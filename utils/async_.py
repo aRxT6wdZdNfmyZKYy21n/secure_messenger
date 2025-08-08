@@ -3,7 +3,9 @@ import logging
 import traceback
 import typing
 
-from concurrent.futures import Future
+from concurrent.futures import (
+    Future,
+)
 
 T = typing.TypeVar('T')
 
@@ -31,7 +33,7 @@ def create_task_with_exceptions_logging(
     coroutine: typing.Coroutine[typing.Any, typing.Any, T],
     name: str | None = None,
 ) -> asyncio.Task:
-    return asyncio.create_task(log_exceptions(coroutine), name=(name))
+    return asyncio.create_task(log_exceptions(coroutine), name=name)
 
 
 def run_coroutine_threadsafe_with_exceptions_logging(
