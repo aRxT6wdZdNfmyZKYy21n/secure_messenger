@@ -1,34 +1,21 @@
-from datetime import (
-    datetime,
-    timezone
-)
+from datetime import datetime, timezone
+
 
 class TimeUtils(object):
     __slots__ = ()
 
     @staticmethod
-    def get_aware_current_datetime() -> (
-            datetime
-    ):
-        return (
-            datetime.now(
-                tz=(
-                    timezone.utc
-                ),
-            )
+    def get_aware_current_datetime() -> datetime:
+        return datetime.now(
+            tz=(timezone.utc),
         )
 
     @classmethod
     def get_aware_current_timestamp_ms(
-            cls,
+        cls,
     ) -> int:
-        aware_current_datetime = (
-            cls.get_aware_current_datetime()
-        )
+        aware_current_datetime = cls.get_aware_current_datetime()
 
-        return (
-            int(
-                aware_current_datetime.timestamp() *
-                1000.,
-            )
+        return int(
+            aware_current_datetime.timestamp() * 1000.0,
         )

@@ -5,62 +5,34 @@ import sys
 
 import i2plib  # noqa
 
-from PySide6.QtGui import (
-    QFontDatabase
-)
+from PySide6.QtGui import QFontDatabase
 
-from PySide6.QtWidgets import (
-    QApplication
-)
+from PySide6.QtWidgets import QApplication
 
-from qasync import (
-    QEventLoop
-)
+from qasync import QEventLoop
 
-from common import (
-    Constants
-)
+from common import Constants
 
-from globals.common import (
-    g_common_globals
-)
+from globals.common import g_common_globals
 
-from gui.main_window import (
-    MainWindow
-)
+from gui.main_window import MainWindow
 
-from helpers.custom_stream_handler import (
-    CustomStreamHandler
-)
+from helpers.custom_stream_handler import CustomStreamHandler
 
-from utils.os import (
-    OsUtils
-)
+from utils.os import OsUtils
 
 
-_IS_DEBUG_RAW = (
-    os.getenv(
-        'IS_DEBUG',
-        'false',
-    )
+_IS_DEBUG_RAW = os.getenv(
+    'IS_DEBUG',
+    'false',
 )
 
 _IS_DEBUG: bool
 
-if (
-        _IS_DEBUG_RAW ==
-        'true'
-):
-    _IS_DEBUG = (
-        True
-    )
-elif (
-        _IS_DEBUG_RAW ==
-        'false'
-):
-    _IS_DEBUG = (
-        False
-    )
+if _IS_DEBUG_RAW == 'true':
+    _IS_DEBUG = True
+elif _IS_DEBUG_RAW == 'false':
+    _IS_DEBUG = False
 else:
     raise (
         ValueError(
@@ -69,17 +41,13 @@ else:
     )
 
 
-logger = (
-    logging.getLogger(
-        __name__,
-    )
+logger = logging.getLogger(
+    __name__,
 )
 
 
 async def run_application(
-        application: (
-            QApplication
-        ),
+    application: (QApplication),
 ) -> None:
     # Set up application fonts
 
@@ -89,10 +57,7 @@ async def run_application(
 
     font_id = QFontDatabase.addApplicationFont(
         OsUtils.get_path(
-            './'
-            'data/'
-            'static/'
-            'NotoColorEmoji.ttf',
+            './data/static/NotoColorEmoji.ttf',
         )
     )
 
@@ -105,17 +70,13 @@ async def run_application(
 
     # Set up events
 
-    application_close_event = (
-        asyncio.Event()
-    )
+    application_close_event = asyncio.Event()
 
     application.aboutToQuit.connect(  # noqa
         application_close_event.set,
     )
 
-    window = (
-        MainWindow()
-    )
+    window = MainWindow()
 
     window.show()
 
@@ -130,38 +91,26 @@ async def run_application(
     # with py_qt_event_loop:
     #     py_qt_event_loop.run_forever()
 
-    await (
-        asyncio.gather(
-            # window.start_local_i2p_node_sam_session_control_connection_creation_loop(),
-            window.start_local_i2p_node_sam_session_incoming_data_connection_creation_loop(),
-            window.start_local_i2p_node_sam_session_outgoing_data_connection_creation_loop(),
-            window.start_remote_i2p_node_status_update_loop(),
-            application_close_event.wait(),
-        )
+    await asyncio.gather(
+        # window.start_local_i2p_node_sam_session_control_connection_creation_loop(),
+        window.start_local_i2p_node_sam_session_incoming_data_connection_creation_loop(),
+        window.start_local_i2p_node_sam_session_outgoing_data_connection_creation_loop(),
+        window.start_remote_i2p_node_status_update_loop(),
+        application_close_event.wait(),
     )
 
 
 def main() -> None:
     # Create data directory
 
-    data_directory_path = (
-        Constants.Path.DataDirectory
-    )
+    data_directory_path = Constants.Path.DataDirectory
 
-    if not (
-            os.path.exists(
-                data_directory_path
-            )
-    ):
-        os.makedirs(
-            data_directory_path
-        )
+    if not (os.path.exists(data_directory_path)):
+        os.makedirs(data_directory_path)
 
     # Set up logging
 
-    logging_handlers = [
-        CustomStreamHandler()
-    ]
+    logging_handlers = [CustomStreamHandler()]
 
     logging_level: int
 
@@ -169,54 +118,29 @@ def main() -> None:
         logging_handlers.append(
             logging.FileHandler(
                 'log.log',
-
-                encoding=(
-                    'utf-8'
-                ),
+                encoding=('utf-8'),
             )
         )
 
-        logging_level = (
-            logging.DEBUG
-        )
+        logging_level = logging.DEBUG
     else:
-        logging_level = (
-            logging.INFO
-        )
+        logging_level = logging.INFO
 
     logging.basicConfig(
-        encoding=(
-            'utf-8'
-        ),
-
-        format=(
-            '[%(levelname)s]'
-            '[%(asctime)s]'
-            '[%(name)s]'
-            ': %(message)s'
-        ),
-
-        handlers=(
-            logging_handlers
-        ),
-
-        level=(
-            logging_level
-        ),
+        encoding=('utf-8'),
+        format=('[%(levelname)s][%(asctime)s][%(name)s]: %(message)s'),
+        handlers=(logging_handlers),
+        level=(logging_level),
     )
 
     # create PyQt6 application
 
-    application = (
-        QApplication(
-            sys.argv,
-        )
+    application = QApplication(
+        sys.argv,
     )
 
-    py_qt_event_loop = (
-        QEventLoop(
-            application,
-        )
+    py_qt_event_loop = QEventLoop(
+        application,
     )
 
     # py_qt_event_loop.set_debug(
@@ -244,8 +168,5 @@ def main() -> None:
     # )
 
 
-if (
-        __name__ ==
-        '__main__'
-):
+if __name__ == '__main__':
     main()

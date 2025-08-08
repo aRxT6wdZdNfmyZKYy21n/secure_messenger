@@ -1,0 +1,12 @@
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "B", "UP"]  # E/F=flake8, I=isort, N=naming, etc
+
+[tool.ruff.format]
+indent-style = "space"
+quote-style = "single"
+line-ending = "auto"
+skip-magic-trailing-comma = false

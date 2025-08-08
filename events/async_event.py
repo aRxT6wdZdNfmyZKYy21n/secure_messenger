@@ -17,41 +17,15 @@ from utils.async_ import (
 
 # Async version of Event class
 class AsyncEvent(Event):
-    __slots__ = (
-        '__async_delegates',
-    )
+    __slots__ = ('__async_delegates',)
 
-    def __init__(
-            self,
+    def __init__(self, name: str) -> None:
+        super(AsyncEvent, self).__init__(name)
 
-            name: str
-    ) -> None:
-        super(
-            AsyncEvent,
-            self
-        ).__init__(
-            name
-        )
+        self.__async_delegates: list[Constants.AsyncFunctionType] = []
 
-        self.__async_delegates: (
-            list[
-                Constants.AsyncFunctionType
-            ]
-        ) = []
-
-    def __call__(
-            self,
-
-            *args,
-            **kwargs
-    ) -> None:
-        super(
-            AsyncEvent,
-            self
-        ).__call__(
-            *args,
-            **kwargs
-        )
+    def __call__(self, *args, **kwargs) -> None:
+        super(AsyncEvent, self).__call__(*args, **kwargs)
 
         create_task_with_exceptions_logging_threadsafe(
             self.__call_event_via_gather(
@@ -75,64 +49,33 @@ class AsyncEvent(Event):
             )
         """
 
-    def clear(
-            self
-    ) -> None:
-        super(
-            AsyncEvent,
-            self
-        ).clear()
+    def clear(self) -> None:
+        super(AsyncEvent, self).clear()
 
         self.__async_delegates.clear()
 
     def _get_container(
-            self,
-
-            delegate: (
-                typing.Union[
-                    typing.Callable,
-                    Constants.AsyncFunctionType
-                ]
-            )
+        self, delegate: (typing.Union[typing.Callable, Constants.AsyncFunctionType])
     ):
-        if (
-                inspect.iscoroutinefunction(
-                    delegate,
-                )
+        if inspect.iscoroutinefunction(
+            delegate,
         ):
-            return (
-                self.__async_delegates
-            )
+            return self.__async_delegates
 
-        return (
-            super(
-                AsyncEvent,
-                self
-            )._get_container(
-                delegate,
-            )
+        return super(AsyncEvent, self)._get_container(
+            delegate,
         )
 
     """ 1st way - via traditional gather """
 
-    async def __call_event_via_gather(
-            self,
-
-            *args,
-            **kwargs
-    ) -> None:
-        await (
-            asyncio.gather(
-                *(
-                    delegate(
-                        *args,
-                        **kwargs,
-                    )
-
-                    for delegate in (
-                        self.__async_delegates
-                    )
+    async def __call_event_via_gather(self, *args, **kwargs) -> None:
+        await asyncio.gather(
+            *(
+                delegate(
+                    *args,
+                    **kwargs,
                 )
+                for delegate in self.__async_delegates
             )
         )
 

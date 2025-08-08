@@ -17,53 +17,27 @@ from utils.qt import (
 )
 
 
-logger = (
-    logging.getLogger(
-        __name__,
-    )
+logger = logging.getLogger(
+    __name__,
 )
 
 
 class ConversationTextEdit(QTextEdit):
-    def createMimeDataFromSelection(
-            self
-    ) -> (
-            QMimeData
-    ):
-        mime_data = (
-            QMimeData()
+    def createMimeDataFromSelection(self) -> QMimeData:
+        mime_data = QMimeData()
+
+        text_cursor = self.textCursor()
+
+        if not (text_cursor.hasSelection()):
+            return mime_data
+
+        html_text = text_cursor.selection().toHtml()
+
+        result_raw_data = QtUtils.parse_html(
+            html_text,
         )
 
-        text_cursor = (
-            self.textCursor()
-        )
-
-        if not (
-                text_cursor.hasSelection()
-        ):
-            return (
-                mime_data
-            )
-
-        html_text = (
-            text_cursor.selection().toHtml()
-        )
-
-        result_raw_data = (
-            QtUtils.parse_html(
-                html_text,
-            )
-        )
-
-        images: (
-            list[
-                QImage
-            ] | None
-        ) = (
-            result_raw_data[
-                'images'
-            ]
-        )
+        images: list[QImage] | None = result_raw_data['images']
 
         if images is not None:
             logger.debug(
@@ -71,32 +45,18 @@ class ConversationTextEdit(QTextEdit):
                 len(images),
             )
 
-            if (
-                    len(
-                        images
-                    ) !=
-
-                    1
-            ):
+            if len(images) != 1:
                 logger.warning(
                     'Could not set more than one image into QMimeData',
                 )
 
-            image = (
-                images[
-                    0
-                ]
-            )
+            image = images[0]
 
             mime_data.setImageData(
                 image,
             )
 
-        plain_text: str = (
-            result_raw_data[
-                'plain_text'
-            ]
-        )
+        plain_text: str = result_raw_data['plain_text']
 
         if plain_text:
             logger.debug(
@@ -108,6 +68,4 @@ class ConversationTextEdit(QTextEdit):
                 plain_text,
             )
 
-        return (
-            mime_data
-        )
+        return mime_data

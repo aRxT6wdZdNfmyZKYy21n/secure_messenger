@@ -23,118 +23,68 @@ from utils.qt import (
 )
 
 
-logger = (
-    logging.getLogger(
-        __name__,
-    )
+logger = logging.getLogger(
+    __name__,
 )
 
 
 class MessageTextEdit(QTextEdit):
     __slots__ = (
         '__images',
-        '__on_message_send_key_pressed_event'
+        '__on_message_send_key_pressed_event',
     )
 
-    def __init__(
-            self
-    ) -> None:
-        super(
-            MessageTextEdit,
-            self
-        ).__init__()
+    def __init__(self) -> None:
+        super(MessageTextEdit, self).__init__()
 
         self.document().contentsChanged.connect(  # noqa
             self.__update_height,
         )
 
-        self.__images: (
-            list[
-                QImage
-            ]
-        ) = []
+        self.__images: list[QImage] = []
 
-        self.__on_message_send_key_pressed_event = (
-            AsyncEvent(
-                'OnMessageSendKeyPressedEvent',
-            )
+        self.__on_message_send_key_pressed_event = AsyncEvent(
+            'OnMessageSendKeyPressedEvent',
         )
 
         self.__update_height()
 
     def clear(self) -> None:
-        super(
-            MessageTextEdit,
-            self
-        ).clear()
+        super(MessageTextEdit, self).clear()
 
         self.__images.clear()
 
-    def get_on_message_send_key_pressed_event(
-            self
-    ) -> AsyncEvent:
-        return (
-            self.__on_message_send_key_pressed_event
-        )
+    def get_on_message_send_key_pressed_event(self) -> AsyncEvent:
+        return self.__on_message_send_key_pressed_event
 
-    def images(
-            self
-    ) -> (
-            list[
-                QImage
-            ]
-    ):
-        return (
-            self.__images
-        )
+    def images(self) -> list[QImage]:
+        return self.__images
 
-    def insertFromMimeData(
-            self,
-
-            source: (
-                QMimeData
-            )
-    ) -> None:
-        if (
-                source.hasImage()
-        ):
-            image: (
-                QImage
-            ) = source.imageData()
+    def insertFromMimeData(self, source: (QMimeData)) -> None:
+        if source.hasImage():
+            image: QImage = source.imageData()
 
             self.__add_image(
                 image,
             )
-        elif (
-                source.hasUrls()
-        ):
-            urls = (
-                source.urls()
-            )
+        elif source.hasUrls():
+            urls = source.urls()
 
-            for url in (
-                    urls
-            ):
+            for url in urls:
                 if not url.isLocalFile():
-                    logger.warning(
-                        'Non-local file URL is not supported'
-                        f': {url}'
-                    )
+                    logger.warning(f'Non-local file URL is not supported: {url}')
 
                     continue
 
-                image = (
-                    QImage()
-                )
+                image = QImage()
 
                 if not (
-                        image.load(
-                            url.path(),
-                        )
+                    image.load(
+                        url.path(),
+                    )
                 ):
                     logger.warning(
-                        'Could not load image by URL'
-                        f': {url}',
+                        f'Could not load image by URL: {url}',
                     )
 
                     continue
@@ -142,28 +92,14 @@ class MessageTextEdit(QTextEdit):
                 self.__add_image(
                     image,
                 )
-        elif (
-                source.hasHtml()
-        ):
-            html_text = (
-                source.html()
+        elif source.hasHtml():
+            html_text = source.html()
+
+            result_raw_data = QtUtils.parse_html(
+                html_text,
             )
 
-            result_raw_data = (
-                QtUtils.parse_html(
-                    html_text,
-                )
-            )
-
-            images: (
-                list[
-                    QImage
-                ] | None
-            ) = (
-                result_raw_data[
-                    'images'
-                ]
-            )
+            images: list[QImage] | None = result_raw_data['images']
 
             if images is not None:
                 logger.debug(
@@ -171,18 +107,12 @@ class MessageTextEdit(QTextEdit):
                     len(images),
                 )
 
-                for image in (
-                        images
-                ):
+                for image in images:
                     self.__add_image(
                         image,
                     )
 
-            plain_text: str = (
-                result_raw_data[
-                    'plain_text'
-                ]
-            )
+            plain_text: str = result_raw_data['plain_text']
 
             if plain_text:
                 logger.debug(
@@ -194,84 +124,79 @@ class MessageTextEdit(QTextEdit):
                     plain_text,
                 )
 
-        elif (
-                source.hasText()
-        ):
+        elif source.hasText():
             self.insertPlainText(
                 source.text(),
             )
         else:
-            logger.debug('hasColor: %r', source.hasColor(),)
-            logger.debug('colorData: %r', source.colorData(),)
-            logger.debug('hasHtml: %r', source.hasHtml(),)
-            logger.debug('html: %r', source.html(),)
-            logger.debug('hasImage: %r', source.hasImage(),)
-            logger.debug('imageData: %r', source.imageData(),)
-            logger.debug('hasText: %r', source.hasText(),)
-            logger.debug('text: %r', source.text(),)
-            logger.debug('hasUrls: %r', source.hasUrls(),)
-            logger.debug('urls: %r', source.urls(),)
-
-    def keyPressEvent(
-            self,
-
-            event: (
-                QKeyEvent
+            logger.debug(
+                'hasColor: %r',
+                source.hasColor(),
             )
-    ) -> None:
-        key = (
-            event.key()
-        )
-
-        if (
-                key not in
-
-                (
-                    Qt.Key.Key_Enter,
-                    Qt.Key.Key_Return
-                )
-        ):
-            super(
-                MessageTextEdit,
-                self
-            ).keyPressEvent(
-                event
+            logger.debug(
+                'colorData: %r',
+                source.colorData(),
             )
+            logger.debug(
+                'hasHtml: %r',
+                source.hasHtml(),
+            )
+            logger.debug(
+                'html: %r',
+                source.html(),
+            )
+            logger.debug(
+                'hasImage: %r',
+                source.hasImage(),
+            )
+            logger.debug(
+                'imageData: %r',
+                source.imageData(),
+            )
+            logger.debug(
+                'hasText: %r',
+                source.hasText(),
+            )
+            logger.debug(
+                'text: %r',
+                source.text(),
+            )
+            logger.debug(
+                'hasUrls: %r',
+                source.hasUrls(),
+            )
+            logger.debug(
+                'urls: %r',
+                source.urls(),
+            )
+
+    def keyPressEvent(self, event: (QKeyEvent)) -> None:
+        key = event.key()
+
+        if key not in (Qt.Key.Key_Enter, Qt.Key.Key_Return):
+            super(MessageTextEdit, self).keyPressEvent(event)
 
             return
 
-        modifier = (
-            event.modifiers()
-        )
+        modifier = event.modifiers()
 
-        if (
-                modifier not in
-
-                (
-                    Qt.KeyboardModifier.NoModifier,
-                    Qt.KeyboardModifier.KeypadModifier
-                )
+        if modifier not in (
+            Qt.KeyboardModifier.NoModifier,
+            Qt.KeyboardModifier.KeypadModifier,
         ):
-            super(
-                MessageTextEdit,
-                self
-            ).keyPressEvent(
+            super(MessageTextEdit, self).keyPressEvent(
                 event,
             )
 
             return
 
-        logger.debug('on_message_send_key_pressed_event',)
+        logger.debug(
+            'on_message_send_key_pressed_event',
+        )
 
         self.__on_message_send_key_pressed_event()
 
-    def __add_image(
-            self,
-
-            image: (
-                QImage
-            )
-    ) -> None:
+    def __add_image(self, image: (QImage)) -> None:
         self.__images.append(
             image,
         )
@@ -288,34 +213,24 @@ class MessageTextEdit(QTextEdit):
             '\n',
         )
 
-    def __update_height(
-            self
-    ) -> None:
-        new_minimum_height = (
-            min(
-                max(
-                    int(
-                        self.document().size().height()
-                    ),
-
-                    25,
-                ),
-
-                500,
-            )
+    def __update_height(self) -> None:
+        new_minimum_height = min(
+            max(
+                int(self.document().size().height()),
+                25,
+            ),
+            500,
         )
 
-        old_minimum_height = (
-            self.minimumHeight()
-        )
+        old_minimum_height = self.minimumHeight()
 
-        if (
-                new_minimum_height ==
-                old_minimum_height
-        ):
+        if new_minimum_height == old_minimum_height:
             return
 
-        logger.debug('new_minimum_height: %s', new_minimum_height,)
+        logger.debug(
+            'new_minimum_height: %s',
+            new_minimum_height,
+        )
 
         self.setMinimumHeight(
             new_minimum_height,
