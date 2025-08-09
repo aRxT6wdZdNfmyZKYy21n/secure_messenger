@@ -38,23 +38,19 @@ from utils.os import (
 )
 
 
-_IS_DEBUG_RAW = os.getenv(
-    'IS_DEBUG',
-    'false',
-)
+def _parse_bool_env(name: str, default: bool = False) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    raw_lower = raw.strip().lower()
+    if raw_lower in {'1', 'true', 'yes', 'y', 'on'}:
+        return True
+    if raw_lower in {'0', 'false', 'no', 'n', 'off'}:
+        return False
+    raise ValueError(f'Invalid boolean env {name}={raw!r}')
 
-_IS_DEBUG: bool
 
-if _IS_DEBUG_RAW == 'true':
-    _IS_DEBUG = True
-elif _IS_DEBUG_RAW == 'false':
-    _IS_DEBUG = False
-else:
-    raise (
-        ValueError(
-            _IS_DEBUG_RAW,
-        )
-    )
+_IS_DEBUG = _parse_bool_env('IS_DEBUG', default=False)
 
 
 logger = logging.getLogger(
@@ -71,18 +67,10 @@ async def run_application(
     #   render glyph failed err=9e
     #   QFontEngine: Glyph rendered in unknown pixel_mode=0
 
-    font_id = QFontDatabase.addApplicationFont(
-        OsUtils.get_path(
-            './data/static/NotoColorEmoji.ttf',
-        )
-    )
-
-    assert font_id == 0, 'Could not load emoji font'
-
-    QFontDatabase.addApplicationEmojiFontFamily(
-        # 'NotoColorEmoji-Regular'
-        'Noto Color Emoji',
-    )
+    font_file_path = OsUtils.get_path('./data/static/NotoColorEmoji.ttf')
+    font_id = QFontDatabase.addApplicationFont(font_file_path)
+    if font_id < 0:
+        logger.warning('Emoji font not loaded: %s', font_file_path)
 
     # Set up events
 

@@ -915,7 +915,7 @@ class MainWindow(QMainWindow):
                 continue
 
     @staticmethod
-    def __send_ack_raw_data(
+    async def __send_ack_raw_data(
         connection: (Connection),
         message_id: int,
     ) -> None:
@@ -923,13 +923,10 @@ class MainWindow(QMainWindow):
             'message_id': (message_id),
             'type': ('ack'),
         }
-
-        connection.send_raw_data(
-            raw_data,
-        )
+        await connection.send_raw_data_async(raw_data)
 
     @staticmethod
-    def __send_message_raw_data(
+    async def __send_message_raw_data(
         connection: (Connection),
         message_id: int,
         message_raw_data: (dict),
@@ -940,18 +937,14 @@ class MainWindow(QMainWindow):
             {'id': (message_id), 'type': ('message')},
         )
 
-        connection.send_raw_data(
-            raw_data,
-        )
+        await connection.send_raw_data_async(raw_data)
 
     @staticmethod
     async def __start_local_i2p_node_sam_session_data_connection_pinging_loop(
         connection: (Connection),
     ) -> None:
         while True:
-            connection.send_raw_data(
-                {'type': ('ping')},
-            )
+            await connection.send_raw_data_async({'type': 'ping'})
 
             await asyncio.sleep(
                 5.0,  # s
@@ -975,10 +968,8 @@ class MainWindow(QMainWindow):
                     ]
                 )
 
-                self.__send_message_raw_data(
-                    connection,
-                    pending_message_id,
-                    pending_message_raw_data,
+                await self.__send_message_raw_data(
+                    connection, pending_message_id, pending_message_raw_data
                 )
 
             await asyncio.sleep(
@@ -1080,9 +1071,8 @@ class MainWindow(QMainWindow):
                         self.__local_i2p_node_sam_session_outgoing_data_connection,
                     ):
                         if data_connection is not None:
-                            self.__send_ack_raw_data(
-                                data_connection,
-                                message_id,
+                            await self.__send_ack_raw_data(
+                                data_connection, message_id
                             )
 
                             break
@@ -1755,10 +1745,8 @@ class MainWindow(QMainWindow):
                 self.__local_i2p_node_sam_session_outgoing_data_connection,
             ):
                 if data_connection is not None:
-                    self.__send_message_raw_data(
-                        data_connection,
-                        message_id,
-                        pending_message_raw_data,
+                    await self.__send_message_raw_data(
+                        data_connection, message_id, pending_message_raw_data
                     )
 
                     break
@@ -1828,16 +1816,8 @@ class MainWindow(QMainWindow):
                 ).decode()
             )
 
-    def __update_conversation(
-        self,
-    ) -> None:
-        conversation_message_raw_data_list_by_time_map_by_date_map = defaultdict(
-            lambda: (
-                defaultdict(
-                    list,
-                )
-            ),
-        )
+    def __update_conversation(self) -> None:
+        conversation_message_raw_data_list_by_time_map_by_date_map = defaultdict(lambda: defaultdict(list))
 
         local_i2p_node_message_raw_data_by_id_map = (
             self.__local_i2p_node_message_raw_data_by_id_map
@@ -1890,165 +1870,14 @@ class MainWindow(QMainWindow):
 
                 message_time = message_datetime.time()
 
-                conversation_message_raw_data_list = (
-                    conversation_message_raw_data_list_by_time_map_by_date_map[
-                        message_date
-                    ][message_time]
-                )
-
-                conversation_message_raw_data_list.append(
-                    message_raw_data,
+                conversation_message_raw_data_list_by_time_map_by_date_map[message_date][message_time].append(
+                    message_raw_data
                 )
 
         conversation_text_edit = self.__conversation_text_edit
-
-        new_conversation_html_io = io.StringIO()
-
-        new_conversation_html_io.write(
-            '\n'.join(
-                (
-                    '<html>',
-                    '    <head>',
-                    '    </head>',
-                    '    <body>',
-                    '        <div id="conversation" style="font-size: 14pt;">',
-                )
-            ),
+        new_conversation_html = self.__build_conversation_html(
+            conversation_message_raw_data_list_by_time_map_by_date_map
         )
-
-        for message_date in sorted(
-            conversation_message_raw_data_list_by_time_map_by_date_map,
-        ):
-            conversation_message_raw_data_list_by_time_map = (
-                conversation_message_raw_data_list_by_time_map_by_date_map.get(
-                    message_date,
-                )
-            )
-
-            assert conversation_message_raw_data_list_by_time_map is not None, None
-
-            new_conversation_html_io.write(
-                '\n'.join(
-                    (
-                        f'            <div>',
-                        f'                [{message_date}]',
-                        f'            </div>',
-                    )
-                ),
-            )
-
-            for message_time in sorted(
-                conversation_message_raw_data_list_by_time_map,
-            ):
-                conversation_message_raw_data_list = (
-                    conversation_message_raw_data_list_by_time_map.get(
-                        message_time,
-                    )
-                )
-
-                assert conversation_message_raw_data_list is not None, None
-
-                for message_idx, conversation_message_raw_data in enumerate(
-                    conversation_message_raw_data_list,
-                ):
-                    new_conversation_html_io.write(
-                        '\n'.join(
-                            (
-                                f'            <div id="message_{message_idx}">',
-                                '                <div>',
-                                f'                    - [{message_time}]',
-                            )
-                        ),
-                    )
-
-                    is_own_message: bool = conversation_message_raw_data['is_own']
-
-                    if is_own_message:
-                        new_conversation_html_io.write(
-                            f'[Вы]',
-                        )
-
-                        is_message_delivered: bool = conversation_message_raw_data[
-                            'is_delivered'
-                        ]
-
-                        if is_message_delivered:
-                            new_conversation_html_io.write(
-                                '[✅ Доставлено]',
-                            )
-                        else:
-                            new_conversation_html_io.write(
-                                '[⌛ <i>Ожидание доставки...</i>]',
-                            )
-                    else:
-                        new_conversation_html_io.write(
-                            f'[Собеседник]',
-                        )
-
-                    new_conversation_html_io.write(
-                        ': ',
-                    )
-
-                    conversation_message_text = conversation_message_raw_data.get(
-                        'text',
-                    )
-
-                    if conversation_message_text is not None:
-                        new_conversation_html_io.write(
-                            conversation_message_text + '\n',
-                        )
-
-                    new_conversation_html_io.write(
-                        '                </div>',
-                    )
-
-                    conversation_message_image_base64_encoded_text_list: (
-                        list[str] | None
-                    ) = conversation_message_raw_data.get(
-                        'image_base64_encoded_text_list',
-                    )
-
-                    if conversation_message_image_base64_encoded_text_list is not None:
-                        new_conversation_html_io.write(
-                            '                <div>',
-                        )
-
-                        for (
-                            conversation_message_image_idx,
-                            conversation_message_image_base64_encoded_text,
-                        ) in enumerate(
-                            conversation_message_image_base64_encoded_text_list,
-                        ):
-                            if conversation_message_image_idx:
-                                new_conversation_html_io.write(
-                                    '\n',
-                                )
-
-                            new_conversation_html_io.write(
-                                f'                    <div id="message_{message_idx}_image_{conversation_message_image_idx}">'
-                                + QtUtils.get_image_html_text(
-                                    conversation_message_image_base64_encoded_text
-                                )
-                                + '                    </div>',
-                            )
-
-                        new_conversation_html_io.write(
-                            '                </div>',
-                        )
-
-                    new_conversation_html_io.write(
-                        '            </div>',
-                    )
-
-        new_conversation_html_io.write(
-            '\n'.join(('        </div>', '    </body>', '</html>')),
-        )
-
-        new_conversation_html_io.seek(
-            0,
-        )
-
-        new_conversation_html = new_conversation_html_io.read().strip()
 
         old_conversation_html = conversation_text_edit.toHtml().strip()
 
@@ -2063,6 +1892,85 @@ class MainWindow(QMainWindow):
             vertical_scroll_bar.maximum(),
         )
 
+    @staticmethod
+    def __build_conversation_html(
+        conversation_message_raw_data_list_by_time_map_by_date_map: dict,
+    ) -> str:
+        html = io.StringIO()
+        html.write(
+            '\n'.join(
+                (
+                    '<html>',
+                    '    <head>',
+                    '    </head>',
+                    '    <body>',
+                    '        <div id="conversation" style="font-size: 14pt;">',
+                )
+            )
+        )
+
+        for message_date in sorted(conversation_message_raw_data_list_by_time_map_by_date_map):
+            html.write(
+                '\n'.join(
+                    (
+                        '            <div>',
+                        f'                [{message_date}]',
+                        '            </div>',
+                    )
+                )
+            )
+
+            conversation_message_raw_data_list_by_time = conversation_message_raw_data_list_by_time_map_by_date_map[message_date]
+
+            for message_time in sorted(conversation_message_raw_data_list_by_time):
+                messages = conversation_message_raw_data_list_by_time[message_time]
+                for message_idx, data in enumerate(messages):
+                    html.write(
+                        '\n'.join(
+                            (
+                                f'            <div id="message_{message_idx}">',
+                                '                <div>',
+                                f'                    - [{message_time}]',
+                            )
+                        )
+                    )
+
+                    if data['is_own']:
+                        html.write('[Вы]')
+                        if data.get('is_delivered', False):
+                            html.write('[✅ Доставлено]')
+                        else:
+                            html.write('[⌛ <i>Ожидание доставки...</i>]')
+                    else:
+                        html.write('[Собеседник]')
+
+                    html.write(': ')
+
+                    text = data.get('text')
+                    if text is not None:
+                        html.write(text + '\n')
+
+                    html.write('                </div>')
+
+                    images = data.get('image_base64_encoded_text_list')
+                    if images is not None:
+                        html.write('                <div>')
+                        for img_idx, img_b64 in enumerate(images):
+                            if img_idx:
+                                html.write('\n')
+                            html.write(
+                                f'                    <div id="message_{message_idx}_image_{img_idx}">'
+                                + QtUtils.get_image_html_text(img_b64)
+                                + '                    </div>'
+                            )
+                        html.write('                </div>')
+
+                    html.write('            </div>')
+
+        html.write('\n'.join(('        </div>', '    </body>', '</html>')))
+        html.seek(0)
+        return html.read().strip()
+
     def __update_local_i2p_node_address(self) -> None:
         new_local_i2p_node_address = self.__get_local_i2p_node_address(
             self.__local_i2p_node_destination,
@@ -2076,10 +1984,7 @@ class MainWindow(QMainWindow):
             return
 
         self.__local_i2p_node_address = new_local_i2p_node_address
-
-        self.__local_i2p_node_address_value_label.setText(
-            new_local_i2p_node_address,
-        )
+        QtUtils.set_label_text(self.__local_i2p_node_address_value_label, new_local_i2p_node_address)
 
     async def __update_local_i2p_node_sam_session(
         self,
@@ -2204,8 +2109,10 @@ class MainWindow(QMainWindow):
         ):
             return
 
-        local_i2p_node_sam_session_incoming_data_connection_status_value_label.setText(
-            new_local_i2p_node_sam_session_incoming_data_connection_status_raw
+        QtUtils.set_label_text(
+            local_i2p_node_sam_session_incoming_data_connection_status_value_label,
+            new_local_i2p_node_sam_session_incoming_data_connection_status_raw,
+            color,
         )
 
         logger.info(
@@ -2216,15 +2123,6 @@ class MainWindow(QMainWindow):
         self.__local_i2p_node_sam_session_incoming_data_connection_status_raw = (
             new_local_i2p_node_sam_session_incoming_data_connection_status_raw
         )
-
-        if color is not None:
-            local_i2p_node_sam_session_incoming_data_connection_status_value_label.setStyleSheet(
-                f'color: {color};',
-            )
-        else:
-            local_i2p_node_sam_session_incoming_data_connection_status_value_label.setStyleSheet(
-                '',
-            )
 
     async def __update_local_i2p_node_sam_session_outgoing_data_connection_status(
         self,
@@ -2245,8 +2143,10 @@ class MainWindow(QMainWindow):
         ):
             return
 
-        local_i2p_node_sam_session_outgoing_data_connection_status_value_label.setText(
+        QtUtils.set_label_text(
+            local_i2p_node_sam_session_outgoing_data_connection_status_value_label,
             new_local_i2p_node_sam_session_outgoing_data_connection_status_raw,
+            color,
         )
 
         logger.info(
@@ -2257,15 +2157,6 @@ class MainWindow(QMainWindow):
         self.__local_i2p_node_sam_session_outgoing_data_connection_status_raw = (
             new_local_i2p_node_sam_session_outgoing_data_connection_status_raw
         )
-
-        if color is not None:
-            local_i2p_node_sam_session_outgoing_data_connection_status_value_label.setStyleSheet(
-                f'color: {color};',
-            )
-        else:
-            local_i2p_node_sam_session_outgoing_data_connection_status_value_label.setStyleSheet(
-                '',
-            )
 
     async def __update_local_i2p_node_sam_session_status(
         self, new_local_i2p_node_sam_session_status_raw: str, color: (str | None) = None
@@ -2284,8 +2175,10 @@ class MainWindow(QMainWindow):
         ):
             return
 
-        local_i2p_node_sam_session_status_value_label.setText(
+        QtUtils.set_label_text(
+            local_i2p_node_sam_session_status_value_label,
             new_local_i2p_node_sam_session_status_raw,
+            color,
         )
 
         logger.info(
@@ -2295,15 +2188,6 @@ class MainWindow(QMainWindow):
         self.__local_i2p_node_sam_session_status_raw = (
             new_local_i2p_node_sam_session_status_raw
         )
-
-        if color is not None:
-            local_i2p_node_sam_session_status_value_label.setStyleSheet(
-                f'color: {color};',
-            )
-        else:
-            local_i2p_node_sam_session_status_value_label.setStyleSheet(
-                '',
-            )
 
     async def __update_remote_i2p_node_status(
         self,
@@ -2321,8 +2205,10 @@ class MainWindow(QMainWindow):
         ):
             return
 
-        remote_i2p_node_status_value_label.setText(
+        QtUtils.set_label_text(
+            remote_i2p_node_status_value_label,
             new_remote_i2p_node_status_raw,
+            color,
         )
 
         logger.info(
@@ -2330,12 +2216,3 @@ class MainWindow(QMainWindow):
         )
 
         self.__remote_i2p_node_status_raw = new_remote_i2p_node_status_raw
-
-        if color is not None:
-            remote_i2p_node_status_value_label.setStyleSheet(
-                f'color: {color};',
-            )
-        else:
-            remote_i2p_node_status_value_label.setStyleSheet(
-                '',
-            )

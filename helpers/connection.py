@@ -53,8 +53,9 @@ class Connection(object):
             line_bytes_count_bytes,
         )[0]
 
-        logger.info(
-            f'Reading {line_bytes_count} bytes...',
+        logger.debug(
+            'Reading bytes_count: %s',
+            line_bytes_count,
         )
 
         line_bytes = await self.__read_exactly(
@@ -75,9 +76,7 @@ class Connection(object):
             raw_data,
         )
 
-        logger.info(
-            f'Received raw_data: {logging_raw_data}',
-        )
+        logger.debug('Received raw_data: %r', logging_raw_data)
 
         return raw_data
 
@@ -85,37 +84,28 @@ class Connection(object):
         self,
         raw_data: dict,
     ) -> bool:
-        raw_data_bytes = orjson.dumps(
-            raw_data,
-        )
-
-        raw_data_bytes_count = len(
-            raw_data_bytes,
-        )
-
-        raw_data_bytes_count_bytes = struct.pack(
-            '!I',
-            raw_data_bytes_count,
-        )
-
+        """Synchronous fire-and-forget send (no drain). Prefer send_raw_data_async."""
+        raw_data_bytes = orjson.dumps(raw_data)
+        raw_data_bytes_count_bytes = struct.pack('!I', len(raw_data_bytes))
         writer = self.__writer
+        writer.write(raw_data_bytes_count_bytes)
+        writer.write(raw_data_bytes)
+        logging_raw_data = self.__get_trimmed_data(raw_data)
+        logger.debug('Sent raw data: %r', logging_raw_data)
+        return True
 
-        writer.write(
-            raw_data_bytes_count_bytes,
-        )
-
-        writer.write(
-            raw_data_bytes,
-        )
-
-        logging_raw_data = self.__get_trimmed_data(
-            raw_data,
-        )
-
-        logger.info(
-            f'Sent raw data: {logging_raw_data}',
-        )
-
+    async def send_raw_data_async(
+        self,
+        raw_data: dict,
+    ) -> bool:
+        raw_data_bytes = orjson.dumps(raw_data)
+        raw_data_bytes_count_bytes = struct.pack('!I', len(raw_data_bytes))
+        writer = self.__writer
+        writer.write(raw_data_bytes_count_bytes)
+        writer.write(raw_data_bytes)
+        await writer.drain()
+        logging_raw_data = self.__get_trimmed_data(raw_data)
+        logger.debug('Sent raw data: %r', logging_raw_data)
         return True
 
     @classmethod

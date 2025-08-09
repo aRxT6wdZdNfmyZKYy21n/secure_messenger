@@ -53,6 +53,23 @@ class QtUtils(object):
         return label
 
     @staticmethod
+    def set_label_text(
+        label: QLabel,
+        text: str,
+        color: str | None = None,
+    ) -> None:
+        current_text = label.text().strip()
+
+        if current_text != text:
+            label.setText(text)
+
+        if color is not None:
+            label.setStyleSheet(f'color: {color};')
+        else:
+            # Reset to default
+            label.setStyleSheet('')
+
+    @staticmethod
     def get_image_base64_encoded_text(
         image: QImage,
     ) -> str:
@@ -74,7 +91,7 @@ class QtUtils(object):
     ) -> str:
         return (
             '<img'
-            f' src="{_HTML_IMAGE_SOURCE_PNG_BASE_64_PREFIX} {image_base64_encoded_text}"'
+            f' src="{_HTML_IMAGE_SOURCE_PNG_BASE_64_PREFIX}{image_base64_encoded_text}"'
             ' />'
         )
 
