@@ -37,7 +37,7 @@ logger = logging.getLogger(
 class QtUtils(object):
     @staticmethod
     def create_label(
-        label_text: str,
+        label_text: str = '',
         alignment=Qt.AlignmentFlag.AlignCenter,
     ) -> QLabel:
         label = QLabel(
