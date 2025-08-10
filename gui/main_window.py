@@ -1391,8 +1391,8 @@ class MainWindow(QMainWindow):
                 self.__last_remote_i2p_node_ping_timestamp_ms
             )
 
-            new_remote_i2p_node_status_color: str
-            new_remote_i2p_node_status_raw: str
+            new_remote_i2p_node_status_color = 'red'
+            new_remote_i2p_node_status_raw = 'Оффлайн'
 
             if last_remote_i2p_node_ping_timestamp_ms is not None:
                 current_timestamp_ms = TimeUtils.get_aware_current_timestamp_ms()
@@ -1401,22 +1401,21 @@ class MainWindow(QMainWindow):
                     current_timestamp_ms - last_remote_i2p_node_ping_timestamp_ms
                 )
 
-                new_remote_i2p_node_status_color = 'green'
-
                 if (
-                    delta_time_ms < 1000  # ms
+                        delta_time_ms <
+                        1000 *  # ms
+                        15      # s
                 ):
-                    new_remote_i2p_node_status_raw = f'Онлайн ({delta_time_ms} мс)'
-                else:
-                    delta_time_seconds = (
-                        delta_time_ms // 1000  # ms
-                    )
+                    new_remote_i2p_node_status_color = 'green'
 
-                    new_remote_i2p_node_status_raw = f'Онлайн ({delta_time_seconds} с)'
-            else:
-                new_remote_i2p_node_status_color = 'red'
+                    if delta_time_ms < 1000:  # ms
+                        new_remote_i2p_node_status_raw = f'Онлайн ({delta_time_ms} мс)'
+                    else:
+                        delta_time_seconds = (
+                            delta_time_ms // 1000  # ms
+                        )
 
-                new_remote_i2p_node_status_raw = 'Оффлайн'
+                        new_remote_i2p_node_status_raw = f'Онлайн ({delta_time_seconds} с)'
 
             await self.__update_remote_i2p_node_status(
                 new_remote_i2p_node_status_raw,
