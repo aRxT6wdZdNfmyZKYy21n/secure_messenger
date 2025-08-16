@@ -6,12 +6,12 @@ from common import (
     Constants,
 )
 
-from events.event import (
+from event import (
     Event,
 )
 
 from utils.async_ import (
-    create_task_with_exceptions_logging_threadsafe,
+    create_task_with_exceptions_logging,
 )
 
 
@@ -27,7 +27,7 @@ class AsyncEvent(Event):
     def __call__(self, *args, **kwargs) -> None:
         super(AsyncEvent, self).__call__(*args, **kwargs)
 
-        create_task_with_exceptions_logging_threadsafe(
+        create_task_with_exceptions_logging(
             self.__call_event_via_gather(
                 *args,
                 **kwargs,
@@ -39,7 +39,7 @@ class AsyncEvent(Event):
         for delegate in (
                 self.__async_delegates
         ):
-            create_task_with_exceptions_logging_threadsafe(
+            create_task_with_exceptions_logging(
                 delegate(
                     *args,
                     **kwargs,

@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
     QTextEdit,
 )
 
-from events.async_event import (
+from event.async_event import (
     AsyncEvent,
 )
 

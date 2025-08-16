@@ -33,7 +33,12 @@ def create_task_with_exceptions_logging(
     coroutine: typing.Coroutine[typing.Any, typing.Any, T],
     name: str | None = None,
 ) -> asyncio.Task:
-    return asyncio.create_task(log_exceptions(coroutine), name=name)
+    return asyncio.create_task(
+        log_exceptions(
+            coroutine,
+        ),
+        name=name,
+    )
 
 
 def run_coroutine_threadsafe_with_exceptions_logging(
@@ -45,31 +50,4 @@ def run_coroutine_threadsafe_with_exceptions_logging(
             coroutine,
         ),
         event_loop,
-    )
-
-
-def create_task_with_exceptions_logging_threadsafe(
-    coroutine: typing.Coroutine[typing.Any, typing.Any, T],
-    name: str | None = None,
-) -> typing.Union[asyncio.Task, Future]:
-    try:
-        event_loop = asyncio.get_running_loop()
-    except RuntimeError:  # Running loop was not found
-        event_loop = None
-
-    from globals.common import g_common_globals
-
-    global_event_loop = g_common_globals.get_asyncio_event_loop()
-
-    assert global_event_loop is not None, global_event_loop
-
-    if event_loop is global_event_loop:
-        return create_task_with_exceptions_logging(
-            coroutine,
-            name,
-        )
-
-    return run_coroutine_threadsafe_with_exceptions_logging(
-        coroutine,
-        global_event_loop,
     )

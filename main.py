@@ -21,10 +21,6 @@ from common import (
     Constants,
 )
 
-from globals.common import (
-    g_common_globals,
-)
-
 from gui.main_window import (
     MainWindow,
 )
@@ -152,10 +148,6 @@ def main() -> None:
     # )
 
     asyncio.set_event_loop(
-        py_qt_event_loop,
-    )
-
-    g_common_globals.init_asyncio_event_loop(
         py_qt_event_loop,
     )
 

@@ -1,7 +1,7 @@
 import logging
 import uuid
 
-from events.async_event import (
+from event.async_event import (
     AsyncEvent,
 )
 
