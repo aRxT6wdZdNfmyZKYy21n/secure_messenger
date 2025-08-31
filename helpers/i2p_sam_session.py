@@ -161,6 +161,113 @@ class I2PSAMSession(object):
 
         return True
 
+    async def create_outgoing_data_connection(
+            self,
+
+            ip_address: IPv4Address | IPv6Address | None,
+            port: int | None,
+            remote_node_address_raw: str | None,
+    ) -> bool:
+        if ip_address is None:
+            self.update_outgoing_data_connection_status(
+                new_outgoing_data_connection_status_color='red',
+                new_outgoing_data_connection_status_text='Невозможно создать без адреса собственного узла',
+            )
+
+            return False
+
+        if port is None:
+            self.update_outgoing_data_connection_status(
+                new_outgoing_data_connection_status_color='red',
+                new_outgoing_data_connection_status_text='Невозможно создать без I2P SAM порта',
+            )
+
+            return False
+
+        if remote_node_address_raw is None:
+            self.update_outgoing_data_connection_status(
+                new_outgoing_data_connection_status_color='red',
+                new_outgoing_data_connection_status_text='Невозможно создать без I2P адреса удалённого узла',
+            )
+
+            return False
+
+        is_remote_node_address_raw_valid = self.__is_node_address_raw_valid(
+            remote_node_address_raw,
+        )
+
+        if not is_remote_node_address_raw_valid:
+            self.update_outgoing_data_connection_status(
+                new_outgoing_data_connection_status_color='red',
+                new_outgoing_data_connection_status_text='I2P адрес удалённого узла некорректен',
+            )
+
+            return False
+
+        self.update_outgoing_data_connection_status(
+            new_outgoing_data_connection_status_color=None,
+            new_outgoing_data_connection_status_text='Попытка создания...',
+        )
+
+        local_i2p_node_sam_ip_address_and_port_pair = (
+            str(ip_address),
+            port,
+        )
+
+        try:
+            (
+                outgoing_data_reader,
+                outgoing_data_writer,
+            ) = await i2plib.stream_connect(
+                destination=remote_node_address_raw,
+                session_name=self.__name,
+                sam_address=local_i2p_node_sam_ip_address_and_port_pair,
+            )
+        except i2plib.exceptions.CantReachPeer:
+            self.update_outgoing_data_connection_status(
+                new_outgoing_data_connection_status_color='red',
+                new_outgoing_data_connection_status_text='Не удалось подключиться к удалённому узлу',
+            )
+
+            return False
+        except i2plib.exceptions.InvalidId:
+            self.update_outgoing_data_connection_status(
+                new_outgoing_data_connection_status_color='red',
+                new_outgoing_data_connection_status_text='Ошибка: сессии не существует',
+            )
+
+            # TODO: event
+
+            # await self.__close_local_i2p_node_sam_session_control_connection()
+
+            # await self.__update_local_i2p_node_sam_session()
+
+            return False
+        except i2plib.exceptions.InvalidKey:
+            self.update_outgoing_data_connection_status(
+                new_outgoing_data_connection_status_color='red',
+                new_outgoing_data_connection_status_text='Ошибка: некорректный I2P адрес удалённого узла',
+            )
+
+            return False
+
+        self.__outgoing_data_connection = Connection(
+            outgoing_data_reader,
+            outgoing_data_writer,
+        )
+
+        self.update_outgoing_data_connection_status(
+            new_outgoing_data_connection_status_color='green',
+            new_outgoing_data_connection_status_text='Создано',
+        )
+
+        logger.info(
+            'Successfully connected to client'
+            f' with remote I2P Node address {remote_node_address_raw!r}'
+        )
+
+        return True
+
     async def fini(
             self,
     ) -> None:
@@ -202,12 +309,6 @@ class I2PSAMSession(object):
 
     def regenerate_name(self) -> None:
         self.__name = self.__generate_name()
-
-    def set_outgoing_data_connection(
-            self,
-            value: Connection | None
-    ) -> None:
-        self.__outgoing_data_connection = value
 
     def update_incoming_data_connection_status(
         self,
@@ -278,3 +379,11 @@ class I2PSAMSession(object):
     @staticmethod
     def __generate_name() -> str:
         return uuid.uuid4().hex
+
+    @staticmethod
+    def __is_node_address_raw_valid(
+        node_address_raw: str,
+    ) -> bool:
+        return node_address_raw.endswith(
+            '.i2p',
+        )

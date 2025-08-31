@@ -1116,15 +1116,18 @@ class MainWindow(QMainWindow):
                 ), None
 
             local_i2p_node_sam_ip_address = self.__local_i2p_node_sam_ip_address
+            local_i2p_node_sam_port = self.__local_i2p_node_sam_port
+            remote_i2p_node_address_raw = self.__remote_i2p_node_address_raw
 
             local_i2p_node_sam_session = self.__local_i2p_node_sam_session
 
-            if local_i2p_node_sam_ip_address is None:
-                local_i2p_node_sam_session.update_outgoing_data_connection_status(
-                    new_outgoing_data_connection_status_color='red',
-                    new_outgoing_data_connection_status_text='Невозможно создать без адреса собственного узла',
-                )
-
+            if not (
+                    await local_i2p_node_sam_session.create_outgoing_data_connection(
+                        local_i2p_node_sam_ip_address,
+                        local_i2p_node_sam_port,
+                        remote_i2p_node_address_raw,
+                    )
+            ):
                 await (  # TODO: make this better
                     asyncio.sleep(
                         1.0,  # s
@@ -1133,134 +1136,8 @@ class MainWindow(QMainWindow):
 
                 continue
 
-            local_i2p_node_sam_port = self.__local_i2p_node_sam_port
-
-            if local_i2p_node_sam_port is None:
-                local_i2p_node_sam_session.update_outgoing_data_connection_status(
-                    new_outgoing_data_connection_status_color='red',
-                    new_outgoing_data_connection_status_text='Невозможно создать без I2P SAM порта',
-                )
-
-                await (  # TODO: make this better
-                    asyncio.sleep(1.0),
-                )
-
-                continue
-
-            remote_i2p_node_address_raw = self.__remote_i2p_node_address_raw
-
-            if remote_i2p_node_address_raw is None:
-                local_i2p_node_sam_session.update_outgoing_data_connection_status(
-                    new_outgoing_data_connection_status_color='red',
-                    new_outgoing_data_connection_status_text='Невозможно создать без I2P адреса удалённого узла',
-                )
-
-                await (  # TODO: make this better
-                    asyncio.sleep(
-                        1.0,  # s
-                    )
-                )
-
-                continue
-
-            is_remote_i2p_node_address_raw_valid = self.__is_i2p_node_address_raw_valid(
-                remote_i2p_node_address_raw,
-            )
-
-            if not is_remote_i2p_node_address_raw_valid:
-                local_i2p_node_sam_session.update_outgoing_data_connection_status(
-                    new_outgoing_data_connection_status_color='red',
-                    new_outgoing_data_connection_status_text='I2P адрес удалённого узла некорректен',
-                )
-
-                await (  # TODO: make this better
-                    asyncio.sleep(
-                        1.0,  # s
-                    )
-                )
-
-                continue
-
-            local_i2p_node_sam_ip_address_and_port_pair = (
-                str(local_i2p_node_sam_ip_address),
-                local_i2p_node_sam_port,
-            )
-
-            local_i2p_node_sam_session.update_outgoing_data_connection_status(
-                new_outgoing_data_connection_status_color=None,
-                new_outgoing_data_connection_status_text='Попытка создания...',
-            )
-
-            try:
-                (
-                    local_i2p_node_sam_session_outgoing_data_reader,
-                    local_i2p_node_sam_session_outgoing_data_writer,
-                ) = await i2plib.stream_connect(
-                    destination=(remote_i2p_node_address_raw),
-                    session_name=local_i2p_node_sam_session.get_name(),
-                    sam_address=local_i2p_node_sam_ip_address_and_port_pair,
-                )
-            except i2plib.exceptions.CantReachPeer:
-                local_i2p_node_sam_session.update_outgoing_data_connection_status(
-                    new_outgoing_data_connection_status_color='red',
-                    new_outgoing_data_connection_status_text='Не удалось подключиться к удалённому узлу',
-                )
-
-                await (  # TODO: make this better
-                    asyncio.sleep(
-                        1.0,  # s
-                    )
-                )
-
-                continue
-            except i2plib.exceptions.InvalidId:
-                local_i2p_node_sam_session.update_outgoing_data_connection_status(
-                    new_outgoing_data_connection_status_color='red',
-                    new_outgoing_data_connection_status_text='Ошибка: сессии не существует',
-                )
-
-                await self.__close_local_i2p_node_sam_session_control_connection()
-
-                await self.__update_local_i2p_node_sam_session()
-
-                await (  # TODO: make this better
-                    asyncio.sleep(
-                        1.0,  # s
-                    )
-                )
-
-                continue
-            except i2plib.exceptions.InvalidKey:
-                local_i2p_node_sam_session.update_outgoing_data_connection_status(
-                    new_outgoing_data_connection_status_color='red',
-                    new_outgoing_data_connection_status_text='Ошибка: некорректный I2P адрес удалённого узла',
-                )
-
-                await (  # TODO: make this better
-                    asyncio.sleep(
-                        1.0,  # s
-                    )
-                )
-
-                continue
-
-            local_i2p_node_sam_session_outgoing_data_connection = Connection(
-                local_i2p_node_sam_session_outgoing_data_reader,
-                local_i2p_node_sam_session_outgoing_data_writer,
-            )
-
-            local_i2p_node_sam_session.set_outgoing_data_connection(
-                local_i2p_node_sam_session_outgoing_data_connection,
-            )
-
-            local_i2p_node_sam_session.update_outgoing_data_connection_status(
-                new_outgoing_data_connection_status_color='green',
-                new_outgoing_data_connection_status_text='Создано',
-            )
-
-            logger.info(
-                'Successfully connected to client'
-                f' with remote I2P Node address {remote_i2p_node_address_raw!r}'
+            local_i2p_node_sam_session_outgoing_data_connection = (
+                local_i2p_node_sam_session.get_outgoing_data_connection()
             )
 
             tasks = (
@@ -1290,10 +1167,6 @@ class MainWindow(QMainWindow):
                     task.cancel()
 
                 await local_i2p_node_sam_session.close_outgoing_data_connection()
-
-                local_i2p_node_sam_session_outgoing_data_connection = (  # noqa
-                    None
-                )
 
                 local_i2p_node_sam_session.update_outgoing_data_connection_status(
                     new_outgoing_data_connection_status_color='red',
