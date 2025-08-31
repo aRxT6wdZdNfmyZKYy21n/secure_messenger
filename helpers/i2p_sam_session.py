@@ -1,7 +1,7 @@
 import logging
 import uuid
 
-from event.async_event import (
+from event.async_ import (
     AsyncEvent,
 )
 
@@ -15,7 +15,7 @@ logger = logging.getLogger(
 )
 
 
-class I2PSamSession(object):
+class I2PSAMSession(object):
     __slots__ = (
         '__incoming_data_connection',
         '__incoming_data_connection_status_color',
@@ -90,6 +90,12 @@ class I2PSamSession(object):
             self.__outgoing_data_connection = (
                 outgoing_data_connection  # noqa
             ) = None
+
+    async def fini(
+            self,
+    ) -> None:
+        await self.close_incoming_data_connection()
+        await self.close_outgoing_data_connection()
 
     def get_incoming_data_connection(
             self

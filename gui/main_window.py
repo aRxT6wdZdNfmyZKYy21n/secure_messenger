@@ -3,6 +3,7 @@ import codecs
 import io
 import logging
 import os
+import traceback
 import typing
 import uuid
 
@@ -46,6 +47,10 @@ from common import (
     Constants,
 )
 
+from globals.i2p import (
+    g_i2p_globals,
+)
+
 from gui.text_edit.conversation import (
     ConversationTextEdit,
 )
@@ -59,7 +64,7 @@ from helpers.connection import (
 )
 
 from helpers.i2p_sam_session import (
-    I2PSamSession,
+    I2PSAMSession,
 )
 
 from utils.json import (
@@ -157,7 +162,9 @@ class MainWindow(QMainWindow):
             window_layout_widget,
         )
 
-        local_i2p_node_sam_session = I2PSamSession()
+        i2p_sam_session_manager = g_i2p_globals.get_sam_session_manager()
+
+        local_i2p_node_sam_session = i2p_sam_session_manager.create_session()
 
         local_i2p_node_sam_session_on_incoming_data_connection_status_updated_event = (
             local_i2p_node_sam_session.get_on_incoming_data_connection_status_updated_event()
@@ -2050,6 +2057,22 @@ class MainWindow(QMainWindow):
 
                     await self.__update_local_i2p_node_sam_session_status(
                         'Тайм-аут',
+                        color='red',
+                    )
+
+                    await asyncio.sleep(
+                        1.0,  # s
+                    )
+
+                    continue
+                except Exception as exception:
+                    logger.error(
+                        'Handled exception in session creation'
+                        f': {"".join(traceback.format_exception(exception))}'
+                    )
+
+                    await self.__update_local_i2p_node_sam_session_status(
+                        'Произошла ошибка',
                         color='red',
                     )
 
