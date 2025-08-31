@@ -674,15 +674,16 @@ class MainWindow(QMainWindow):
                 ), None
 
             local_i2p_node_sam_ip_address = self.__local_i2p_node_sam_ip_address
+            local_i2p_node_sam_port = self.__local_i2p_node_sam_port
 
             local_i2p_node_sam_session = self.__local_i2p_node_sam_session
 
-            if local_i2p_node_sam_ip_address is None:
-                local_i2p_node_sam_session.update_incoming_data_connection_status(
-                    new_incoming_data_connection_status_color='red',
-                    new_incoming_data_connection_status_text='Невозможно создать без адреса собственного узла',
-                )
-
+            if not (
+                    await local_i2p_node_sam_session.create_incoming_data_connection(
+                        local_i2p_node_sam_ip_address,
+                        local_i2p_node_sam_port
+                    )
+            ):
                 await (  # TODO: make this better
                     asyncio.sleep(
                         1.0,  # s
@@ -691,85 +692,18 @@ class MainWindow(QMainWindow):
 
                 continue
 
-            local_i2p_node_sam_port = self.__local_i2p_node_sam_port
-
-            if local_i2p_node_sam_port is None:
-                local_i2p_node_sam_session.update_incoming_data_connection_status(
-                    new_incoming_data_connection_status_color='red',
-                    new_incoming_data_connection_status_text='Невозможно создать без I2P SAM порта',
-                )
-
-                await (  # TODO: make this better
-                    asyncio.sleep(
-                        1.0,  # s
-                    )
-                )
-
-                continue
-
-            local_i2p_node_sam_ip_address_and_port_pair = (
-                str(local_i2p_node_sam_ip_address),
-                local_i2p_node_sam_port,
+            local_i2p_node_sam_session_incoming_data_connection = (
+                local_i2p_node_sam_session.get_incoming_data_connection()
             )
 
-            try:
-                (
-                    local_i2p_node_sam_session_incoming_data_reader,
-                    local_i2p_node_sam_session_incoming_data_writer,
-                ) = await i2plib.stream_accept(
-                    session_name=local_i2p_node_sam_session.get_name(),
-                    sam_address=local_i2p_node_sam_ip_address_and_port_pair,
-                )
-            except i2plib.exceptions.InvalidId:
-                local_i2p_node_sam_session.update_incoming_data_connection_status(
-                    new_incoming_data_connection_status_color='red',
-                    new_incoming_data_connection_status_text='Ошибка: сессии не существует',
-                )
-
-                await self.__close_local_i2p_node_sam_session_control_connection()
-
-                await local_i2p_node_sam_session.close_incoming_data_connection()
-
-                local_i2p_node_sam_session_incoming_data_connection = (  # noqa
-                    None
-                )
-
-                await self.__update_local_i2p_node_sam_session()
-
-                await (  # TODO: make this better
-                    asyncio.sleep(
-                        1.0,  # s
-                    )
-                )
-
-                continue
-
-            local_i2p_node_sam_session_incoming_data_connection = Connection(
-                local_i2p_node_sam_session_incoming_data_reader,
-                local_i2p_node_sam_session_incoming_data_writer,
+            remote_i2p_node_destination_raw = await (
+                local_i2p_node_sam_session_incoming_data_connection.read_line()
             )
 
-            local_i2p_node_sam_session.set_incoming_data_connection(
-                local_i2p_node_sam_session_incoming_data_connection,
-            )
-
-            local_i2p_node_sam_session.update_incoming_data_connection_status(
-                new_incoming_data_connection_status_color=None,
-                new_incoming_data_connection_status_text='Прослушивание...',
-            )
-
-            remote_i2p_node_destination_bytes = await (
-                local_i2p_node_sam_session_incoming_data_reader.readline()
-            )
-
-            if not remote_i2p_node_destination_bytes:
+            if not remote_i2p_node_destination_raw:
                 # Connection was closed
 
                 await local_i2p_node_sam_session.close_incoming_data_connection()
-
-                local_i2p_node_sam_session_incoming_data_connection = (  # noqa
-                    None
-                )
 
                 local_i2p_node_sam_session.update_incoming_data_connection_status(
                     new_incoming_data_connection_status_color='red',
@@ -785,7 +719,7 @@ class MainWindow(QMainWindow):
                 continue
 
             remote_i2p_node_destination_raw = (
-                remote_i2p_node_destination_bytes.decode().rstrip()
+                remote_i2p_node_destination_raw.rstrip()
             )
 
             remote_i2p_node_destination = (  # TODO: check equality with settled remote I2P node address
@@ -814,10 +748,6 @@ class MainWindow(QMainWindow):
 
                 await local_i2p_node_sam_session.close_incoming_data_connection()
 
-                local_i2p_node_sam_session_incoming_data_connection = (  # noqa
-                    None
-                )
-
                 await (  # TODO: make this better
                     asyncio.sleep(
                         1.0,  # s
@@ -840,10 +770,6 @@ class MainWindow(QMainWindow):
 
                 await local_i2p_node_sam_session.close_incoming_data_connection()
 
-                local_i2p_node_sam_session_incoming_data_connection = (  # noqa
-                    None
-                )
-
                 await (  # TODO: make this better
                     asyncio.sleep(
                         1.0,  # s
@@ -861,10 +787,6 @@ class MainWindow(QMainWindow):
                 )
 
                 await local_i2p_node_sam_session.close_incoming_data_connection()
-
-                local_i2p_node_sam_session_incoming_data_connection = (  # noqa
-                    None
-                )
 
                 await (  # TODO: make this better
                     asyncio.sleep(
@@ -906,10 +828,6 @@ class MainWindow(QMainWindow):
                     task.cancel()
 
                 await local_i2p_node_sam_session.close_incoming_data_connection()
-
-                local_i2p_node_sam_session_incoming_data_connection = (  # noqa
-                    None
-                )
 
                 local_i2p_node_sam_session.update_incoming_data_connection_status(
                     new_incoming_data_connection_status_color='red',

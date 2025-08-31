@@ -1,6 +1,13 @@
 import logging
 import uuid
 
+from ipaddress import (
+    IPv4Address,
+    IPv6Address
+)
+
+import i2plib  # noqa
+
 from event.async_ import (
     AsyncEvent,
 )
@@ -91,6 +98,69 @@ class I2PSAMSession(object):
                 outgoing_data_connection  # noqa
             ) = None
 
+    async def create_incoming_data_connection(
+            self,
+
+            ip_address: IPv4Address | IPv6Address | None,
+            port: int | None,
+    ) -> bool:
+        if ip_address is None:
+            self.update_incoming_data_connection_status(
+                new_incoming_data_connection_status_color='red',
+                new_incoming_data_connection_status_text='Невозможно создать без адреса собственного узла',
+            )
+
+            return False
+
+        if port is None:
+            self.update_incoming_data_connection_status(
+                new_incoming_data_connection_status_color='red',
+                new_incoming_data_connection_status_text='Невозможно создать без I2P SAM порта',
+            )
+
+            return False
+
+        ip_address_and_port_pair = (
+            str(ip_address),
+            port,
+        )
+
+        try:
+            (
+                incoming_data_reader,
+                incoming_data_writer,
+            ) = await i2plib.stream_accept(
+                session_name=self.__name,
+                sam_address=ip_address_and_port_pair,
+            )
+        except i2plib.exceptions.InvalidId:
+            self.update_incoming_data_connection_status(
+                new_incoming_data_connection_status_color='red',
+                new_incoming_data_connection_status_text='Ошибка: сессии не существует',
+            )
+
+            # TODO: event
+
+            # await self.__close_local_i2p_node_sam_session_control_connection()
+
+            await self.close_incoming_data_connection()
+
+            # await self.__update_local_i2p_node_sam_session()
+
+            return False
+
+        self.__incoming_data_connection = Connection(
+            incoming_data_reader,
+            incoming_data_writer,
+        )
+
+        self.update_incoming_data_connection_status(
+            new_incoming_data_connection_status_color=None,
+            new_incoming_data_connection_status_text='Прослушивание...',
+        )
+
+        return True
+
     async def fini(
             self,
     ) -> None:
@@ -132,12 +202,6 @@ class I2PSAMSession(object):
 
     def regenerate_name(self) -> None:
         self.__name = self.__generate_name()
-
-    def set_incoming_data_connection(
-            self,
-            value: Connection | None
-    ) -> None:
-        self.__incoming_data_connection = value
 
     def set_outgoing_data_connection(
             self,

@@ -36,9 +36,23 @@ class Connection(object):
     ) -> None:
         self.__writer.close()
 
+    async def read_line(
+            self,
+
+            timeout: float = _DEFAULT_TIMEOUT,
+    ) -> str | None:
+        line_bytes = await self.__read_line(
+            timeout
+        )
+
+        if line_bytes is None:
+            return None
+
+        return line_bytes.decode()
+
     async def read_raw_data(
         self,
-        timeout=_DEFAULT_TIMEOUT,
+        timeout: float = _DEFAULT_TIMEOUT,
     ) -> dict | None:
         line_bytes_count_bytes = await self.__read_exactly(
             bytes_count=4,
@@ -141,8 +155,9 @@ class Connection(object):
 
     async def __read_exactly(
         self,
+
         bytes_count: int,
-        timeout=_DEFAULT_TIMEOUT,
+        timeout: float,
     ) -> bytes | None:
         reader = self.__reader
 
@@ -174,3 +189,30 @@ class Connection(object):
         ), data_bytes
 
         return data_bytes
+
+    async def __read_line(
+            self,
+
+            timeout: float,
+    ) -> bytes | None:
+        reader = self.__reader
+
+        try:
+            line_bytes = await asyncio.wait_for(
+                reader.readline(),
+                timeout=timeout,
+            )
+        except asyncio.exceptions.IncompleteReadError:
+            logger.warning(
+                'IncompleteReadError',
+            )
+
+            return None
+        except asyncio.TimeoutError:
+            logger.warning(
+                'Timeout',
+            )
+
+            return None
+
+        return line_bytes
