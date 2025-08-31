@@ -28,26 +28,53 @@ logger = logging.getLogger(
 )
 
 
-class MessageTextEdit(QTextEdit):
+class ResizeableTextEdit(QTextEdit):
+    def __init__(
+            self
+    ) -> None:
+        super().__init__()
+
+        self.textChanged.connect(  # noqa
+            self.__auto_resize
+        )
+
+    def resizeEvent(self, event) -> None:
+        self.__auto_resize()
+
+    def __auto_resize(self) -> None:
+        document = self.document()
+
+        document.setTextWidth(
+            self.viewport().width()
+        )
+
+        margins = self.contentsMargins()
+
+        height = int(
+            document.size().height() +
+            margins.top() +
+            margins.bottom()
+        )
+
+        self.setFixedHeight(
+            height,
+        )
+
+
+class MessageTextEdit(ResizeableTextEdit):
     __slots__ = (
         '__images',
         '__on_message_send_key_pressed_event',
     )
 
     def __init__(self) -> None:
-        super(MessageTextEdit, self).__init__()
-
-        self.document().contentsChanged.connect(  # noqa
-            self.__update_height,
-        )
+        super().__init__()
 
         self.__images: list[QImage] = []
 
         self.__on_message_send_key_pressed_event = AsyncEvent(
             'OnMessageSendKeyPressedEvent',
         )
-
-        self.__update_height()
 
     def clear(self) -> None:
         super(MessageTextEdit, self).clear()
@@ -213,25 +240,12 @@ class MessageTextEdit(QTextEdit):
             '\n',
         )
 
-    def __update_height(self) -> None:
-        new_minimum_height = min(
-            max(
-                int(self.document().size().height()),
-                25,
-            ),
-            500,
+    def setFixedHeight(self, height, /) -> None:
+        height = max(
+            50,
+            height
         )
 
-        old_minimum_height = self.minimumHeight()
-
-        if new_minimum_height == old_minimum_height:
-            return
-
-        logger.debug(
-            'new_minimum_height: %s',
-            new_minimum_height,
-        )
-
-        self.setMinimumHeight(
-            new_minimum_height,
+        super().setFixedHeight(
+            height,
         )
